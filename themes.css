@@ -1,0 +1,149 @@
+/* The surface is a separate layer: opacity never fades text or icons. */
+.card,
+.content {
+  isolation: isolate;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: var(--theme-radius) !important;
+}
+.card:after,
+.content:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--surface-color);
+  background-image: var(--surface-image);
+  background-size: var(--surface-fit);
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--surface-opacity);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.card:before,
+.content:before {
+  display: var(--theme-shine);
+}
+.role,
+.social,
+.instagram-icon,
+.platform,
+.label {
+  color: var(--theme-text);
+}
+.name {
+  color: var(--theme-name);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 10px 20px;
+  line-height: 1.1;
+  background: var(--name-background, #f8fafc);
+  border-radius: var(--theme-radius);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+.role {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+.social {
+  padding: 0 28px;
+  min-width: 0;
+}
+.social span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.accent {
+  background: var(--theme-accent);
+  box-shadow: none;
+}
+.iconbox {
+  border-radius: var(--theme-radius) 0 0 var(--theme-radius);
+}
+.iconbox svg {
+  width: 48px;
+  height: 48px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stage {
+  width: 100%;
+  height: 100%;
+}
+.lower {
+  max-width: 90%;
+}
+.card {
+  max-width: 100%;
+}
+.socialbar {
+  max-width: 92%;
+}
+html[data-transparent='true'] .card {
+  box-shadow: none;
+}
+/* By default both presenter panels share their surface and decoration. */
+.name {
+  isolation: isolate;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+.name span {
+  position: relative;
+  z-index: 2;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.name .accent {
+  z-index: 2;
+}
+html[data-name-style='custom'] .name .accent {
+  display: none;
+}
+html[data-name-style='matched'] .name {
+  background: transparent;
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 -6px 12px rgba(25, 0, 5, 0.2) inset;
+}
+html[data-name-style='matched'] .name:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--surface-color);
+  background-image: var(--surface-image);
+  background-size: var(--surface-fit);
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--surface-opacity);
+  border-radius: inherit;
+  pointer-events: none;
+}
+html[data-name-style='matched'] .name:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  display: var(--theme-shine);
+  background: linear-gradient(
+    115deg,
+    transparent 0 35%,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(255, 255, 255, 0.17) 50%,
+    rgba(255, 255, 255, 0) 58%,
+    transparent 65%
+  );
+  transform: translateX(-45%);
+  animation: shine 8s ease-in-out infinite;
+}
+html[data-name-style='matched'][data-transparent='true'] .name {
+  box-shadow: none;
+}

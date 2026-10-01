@@ -1,6 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Added shared overlay themes, customizable backgrounds and live previews.
+- Matched the presenter name background and width to the lower card by default.
+- Added collapsible settings modules with General first and remembered open state.
+- Expanded minified source and standardized formatting with Prettier and EditorConfig.
+- Added browser regression checks for themes, persistence and legacy configurations.
+
 ## 1.0.0
+
 - Initial public release.
 - Animated name lower thirds and social-media overlay.
 - Custom Browser Dock controller.

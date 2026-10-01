@@ -1,40 +1,323 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Overlay Controller for OBS - Social</title>
-<style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:"Segoe UI",Arial,sans-serif}
-.stage{position:relative;width:1920px;height:250px;overflow:hidden}
-.socialbar{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);width:1760px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;align-items:end;pointer-events:none}
-.item{height:92px;display:flex;min-width:0;opacity:0;transform:translateY(145px) scale(.985);filter:blur(2px);transition:opacity .28s ease,transform .68s cubic-bezier(.16,1,.3,1),filter .38s ease;filter:drop-shadow(0 12px 18px rgba(0,0,0,.28))}
-.socialbar.show .item{opacity:1;transform:translateY(0) scale(1);filter:blur(0) drop-shadow(0 12px 18px rgba(0,0,0,.28))}
-.socialbar.show .item:nth-child(1){transition-delay:0s}.socialbar.show .item:nth-child(2){transition-delay:.14s}.socialbar.show .item:nth-child(3){transition-delay:.28s}
-.iconbox{position:relative;width:112px;flex:0 0 112px;display:flex;align-items:center;justify-content:center;border-radius:17px 0 0 17px;overflow:visible;z-index:2}
-.iconbox:after{content:"";position:absolute;right:-22px;top:0;width:44px;height:100%;background:inherit;transform:skewX(16deg);z-index:-1}
-.iconbox img{width:48px;height:48px;object-fit:contain;position:relative;z-index:3}
-.youtube .iconbox{background:linear-gradient(145deg,#ff1d1d 0%,#e60000 70%,#c90000 100%)}
-.facebook .iconbox{background:linear-gradient(145deg,#2990ff 0%,#1877f2 62%,#0864d5 100%)}
-.instagram .iconbox{background:linear-gradient(145deg,#d62976 0%,#962fbf 38%,#f46f30 76%,#feda75 100%)}
-.instagram .iconbox img,.instagram .iconbox svg{width:47px;height:47px;color:#fff}
-.content{position:relative;min-width:0;flex:1;height:100%;background:linear-gradient(120deg,rgba(255,255,255,.99),rgba(244,246,249,.98));border-radius:0 17px 17px 0;padding:15px 24px 13px 38px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border:1px solid rgba(255,255,255,.75);border-left:0}
-.content:before{content:"";position:absolute;inset:0;background:linear-gradient(112deg,transparent 8%,rgba(255,255,255,.75) 36%,transparent 58%);transform:translateX(-130%);opacity:.45}
-.socialbar.show .content:before{animation:sheen 7s 1.1s ease-in-out infinite}
-@keyframes sheen{0%,72%{transform:translateX(-130%)}88%,100%{transform:translateX(130%)}}
-.platform{font-size:17px;line-height:1.05;font-weight:750;color:#1e232b;letter-spacing:.05px;text-transform:none;margin-bottom:5px}
-.label{font-size:23px;line-height:1.1;font-weight:500;color:#596170;letter-spacing:0;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item.hideNetwork{visibility:hidden}
-.socialbar.out .item{opacity:0;transform:translateY(145px) scale(.985);filter:blur(2px);transition-delay:0s}
-.socialbar.out .item:nth-child(1){transition-delay:.28s}.socialbar.out .item:nth-child(2){transition-delay:.14s}.socialbar.out .item:nth-child(3){transition-delay:0s}
-@media(max-width:1400px){.socialbar{width:92%;gap:16px}.item{height:82px}.iconbox{width:96px;flex-basis:96px}.platform{font-size:15px}.label{font-size:19px}.content{padding-left:32px}}
-</style></head><body>
-<div class="stage"><div id="socialbar" class="socialbar">
-<div id="youtubeRow" class="item youtube"><div class="iconbox"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23 12s0-3.4-.44-5.04a3.1 3.1 0 0 0-2.18-2.2C18.84 4.33 12 4.33 12 4.33s-6.84 0-8.38.43a3.1 3.1 0 0 0-2.18 2.2C1 8.6 1 12 1 12s0 3.4.44 5.04a3.1 3.1 0 0 0 2.18 2.2c1.54.43 8.38.43 8.38.43s6.84 0 8.38-.43a3.1 3.1 0 0 0 2.18-2.2C23 15.4 23 12 23 12Zm-13.2 4.1V7.9l7.1 4.1-7.1 4.1Z"/></svg></div><div class="content"><div class="platform">youtube</div><div id="youtube" class="label"></div></div></div>
-<div id="facebookRow" class="item facebook"><div class="iconbox"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.7 22v-9h3l.45-3.5H13.7V7.27c0-1.01.28-1.7 1.74-1.7h1.86V2.45a25 25 0 0 0-2.71-.14c-2.68 0-4.52 1.64-4.52 4.65V9.5H7.04V13h3.03v9h3.63Z"/></svg></div><div class="content"><div class="platform">facebook</div><div id="facebook" class="label"></div></div></div>
-<div id="instagramRow" class="item instagram"><div class="iconbox"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4.25" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="17.65" cy="6.45" r="1.25" fill="currentColor"/></svg></div><div class="content"><div class="platform">instagram</div><div id="instagram" class="label"></div></div></div>
-</div></div>
-<script>
-const socialbar=document.getElementById('socialbar');let timer=null,finishTimer=null;
-function setRow(id,value,prefix=''){const row=document.getElementById(id+'Row'),el=document.getElementById(id);const v=(value||'').trim();row.classList.toggle('hideNetwork',!v);el.textContent=v?(prefix+v.replace(/^@/,'')):''}
-function hide(notify=true){clearTimeout(timer);clearTimeout(finishTimer);socialbar.classList.add('out');socialbar.classList.remove('show');if(notify)finishTimer=setTimeout(()=>void 0,1200)}
-function show(data){clearTimeout(timer);clearTimeout(finishTimer);socialbar.classList.remove('show','out');const s=data._settings||{};document.documentElement.style.setProperty('--overlay-font',s.font||'"Segoe UI",Arial,sans-serif');document.body.style.fontFamily='var(--overlay-font)';setRow('youtube',data.youtube||'');setRow('facebook',data.facebook||'');setRow('instagram',data.instagram||'','@');void socialbar.offsetWidth;socialbar.classList.add('show');timer=setTimeout(()=>hide(true),(Number(s.duration)||30)*1000)}
-window.addEventListener('oocSocialShow',e=>show(e.detail||{}));window.addEventListener('oocSocialHide',()=>hide(true));
-</script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Overlay Controller for OBS - Social</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+      .stage {
+        position: relative;
+        width: 1920px;
+        height: 250px;
+        overflow: hidden;
+      }
+      .socialbar {
+        position: absolute;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        width: 1760px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 28px;
+        align-items: end;
+        pointer-events: none;
+      }
+      .item {
+        height: 92px;
+        display: flex;
+        min-width: 0;
+        opacity: 0;
+        transform: translateY(145px) scale(0.985);
+        filter: blur(2px);
+        transition:
+          opacity 0.28s ease,
+          transform 0.68s cubic-bezier(0.16, 1, 0.3, 1),
+          filter 0.38s ease;
+        filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.28));
+      }
+      .socialbar.show .item {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.28));
+      }
+      .socialbar.show .item:nth-child(1) {
+        transition-delay: 0s;
+      }
+      .socialbar.show .item:nth-child(2) {
+        transition-delay: 0.14s;
+      }
+      .socialbar.show .item:nth-child(3) {
+        transition-delay: 0.28s;
+      }
+      .iconbox {
+        position: relative;
+        width: 112px;
+        flex: 0 0 112px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 17px 0 0 17px;
+        overflow: visible;
+        z-index: 2;
+      }
+      .iconbox:after {
+        content: '';
+        position: absolute;
+        right: -22px;
+        top: 0;
+        width: 44px;
+        height: 100%;
+        background: inherit;
+        transform: skewX(16deg);
+        z-index: -1;
+      }
+      .iconbox img {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        position: relative;
+        z-index: 3;
+      }
+      .youtube .iconbox {
+        background: linear-gradient(145deg, #ff1d1d 0%, #e60000 70%, #c90000 100%);
+      }
+      .facebook .iconbox {
+        background: linear-gradient(145deg, #2990ff 0%, #1877f2 62%, #0864d5 100%);
+      }
+      .instagram .iconbox {
+        background: linear-gradient(145deg, #d62976 0%, #962fbf 38%, #f46f30 76%, #feda75 100%);
+      }
+      .instagram .iconbox img,
+      .instagram .iconbox svg {
+        width: 47px;
+        height: 47px;
+        color: #fff;
+      }
+      .content {
+        position: relative;
+        min-width: 0;
+        flex: 1;
+        height: 100%;
+        background: linear-gradient(120deg, rgba(255, 255, 255, 0.99), rgba(244, 246, 249, 0.98));
+        border-radius: 0 17px 17px 0;
+        padding: 15px 24px 13px 38px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-left: 0;
+      }
+      .content:before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          112deg,
+          transparent 8%,
+          rgba(255, 255, 255, 0.75) 36%,
+          transparent 58%
+        );
+        transform: translateX(-130%);
+        opacity: 0.45;
+      }
+      .socialbar.show .content:before {
+        animation: sheen 7s 1.1s ease-in-out infinite;
+      }
+      @keyframes sheen {
+        0%,
+        72% {
+          transform: translateX(-130%);
+        }
+        88%,
+        100% {
+          transform: translateX(130%);
+        }
+      }
+      .platform {
+        font-size: 17px;
+        line-height: 1.05;
+        font-weight: 750;
+        color: #1e232b;
+        letter-spacing: 0.05px;
+        text-transform: none;
+        margin-bottom: 5px;
+      }
+      .label {
+        font-size: 23px;
+        line-height: 1.1;
+        font-weight: 500;
+        color: #596170;
+        letter-spacing: 0;
+        text-transform: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .item.hideNetwork {
+        visibility: hidden;
+      }
+      .socialbar.out .item {
+        opacity: 0;
+        transform: translateY(145px) scale(0.985);
+        filter: blur(2px);
+        transition-delay: 0s;
+      }
+      .socialbar.out .item:nth-child(1) {
+        transition-delay: 0.28s;
+      }
+      .socialbar.out .item:nth-child(2) {
+        transition-delay: 0.14s;
+      }
+      .socialbar.out .item:nth-child(3) {
+        transition-delay: 0s;
+      }
+      @media (max-width: 1400px) {
+        .socialbar {
+          width: 92%;
+          gap: 16px;
+        }
+        .item {
+          height: 82px;
+        }
+        .iconbox {
+          width: 96px;
+          flex-basis: 96px;
+        }
+        .platform {
+          font-size: 15px;
+        }
+        .label {
+          font-size: 19px;
+        }
+        .content {
+          padding-left: 32px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="themes.css" />
+    <script src="themes.js"></script>
+  </head>
+  <body>
+    <div class="stage">
+      <div id="socialbar" class="socialbar">
+        <div id="youtubeRow" class="item youtube">
+          <div class="iconbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M23 12s0-3.4-.44-5.04a3.1 3.1 0 0 0-2.18-2.2C18.84 4.33 12 4.33 12 4.33s-6.84 0-8.38.43a3.1 3.1 0 0 0-2.18 2.2C1 8.6 1 12 1 12s0 3.4.44 5.04a3.1 3.1 0 0 0 2.18 2.2c1.54.43 8.38.43 8.38.43s6.84 0 8.38-.43a3.1 3.1 0 0 0 2.18-2.2C23 15.4 23 12 23 12Zm-13.2 4.1V7.9l7.1 4.1-7.1 4.1Z"
+              />
+            </svg>
+          </div>
+          <div class="content">
+            <div class="platform">youtube</div>
+            <div id="youtube" class="label"></div>
+          </div>
+        </div>
+        <div id="facebookRow" class="item facebook">
+          <div class="iconbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M13.7 22v-9h3l.45-3.5H13.7V7.27c0-1.01.28-1.7 1.74-1.7h1.86V2.45a25 25 0 0 0-2.71-.14c-2.68 0-4.52 1.64-4.52 4.65V9.5H7.04V13h3.03v9h3.63Z"
+              />
+            </svg>
+          </div>
+          <div class="content">
+            <div class="platform">facebook</div>
+            <div id="facebook" class="label"></div>
+          </div>
+        </div>
+        <div id="instagramRow" class="item instagram">
+          <div class="iconbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="2.5"
+                y="2.5"
+                width="19"
+                height="19"
+                rx="5.2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="4.25"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              />
+              <circle cx="17.65" cy="6.45" r="1.25" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="content">
+            <div class="platform">instagram</div>
+            <div id="instagram" class="label"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const socialbar = document.getElementById('socialbar');
+      let timer = null,
+        finishTimer = null;
+      function setRow(id, value, prefix = '') {
+        const row = document.getElementById(id + 'Row'),
+          el = document.getElementById(id);
+        const v = (value || '').trim();
+        row.classList.toggle('hideNetwork', !v);
+        el.textContent = v ? prefix + v.replace(/^@/, '') : '';
+      }
+      function hide(notify = true) {
+        clearTimeout(timer);
+        clearTimeout(finishTimer);
+        socialbar.classList.add('out');
+        socialbar.classList.remove('show');
+        if (notify) finishTimer = setTimeout(() => void 0, 1200);
+      }
+      function show(data) {
+        clearTimeout(timer);
+        clearTimeout(finishTimer);
+        socialbar.classList.remove('show', 'out');
+        const s = OverlayThemes.apply(data._settings || {});
+        document.documentElement.style.setProperty(
+          '--overlay-font',
+          s.font || '"Segoe UI",Arial,sans-serif',
+        );
+        document.body.style.fontFamily = 'var(--overlay-font)';
+        setRow('youtube', data.youtube || '');
+        setRow('facebook', data.facebook || '');
+        setRow('instagram', data.instagram || '', '@');
+        void socialbar.offsetWidth;
+        socialbar.classList.add('show');
+        timer = setTimeout(() => hide(true), (Number(s.duration) || 30) * 1000);
+      }
+      window.addEventListener('oocSocialShow', (e) => show(e.detail || {}));
+      window.addEventListener('oocSocialHide', () => hide(true));
+      window.addEventListener('message', (e) => {
+        if (
+          new URLSearchParams(location.search).has('preview') &&
+          e.source === parent &&
+          e.data?.type === 'overlay-preview'
+        )
+          show(e.data.payload);
+      });
+    </script>
+  </body>
+</html>
