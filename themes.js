@@ -2,6 +2,9 @@
 window.OverlayThemes = (() => {
   const defaults = {
     preset: 'classic',
+    nameModel: 'classic',
+    socialModel: 'classic',
+    logoImage: '',
     nameStyle: 'matched',
     primary: '#741D2B',
     secondary: '#D6C6B4',
@@ -61,6 +64,16 @@ window.OverlayThemes = (() => {
     Number.isFinite(Number(v)) && v !== '' ? Math.max(min, Math.min(max, Number(v))) : f;
   function normalize(input = {}) {
     const s = { ...defaults, ...input };
+    s.nameModel = ['classic', 'sidebar', 'identity'].includes(s.nameModel)
+      ? s.nameModel
+      : 'classic';
+    s.socialModel = ['classic', 'capsule'].includes(s.socialModel) ? s.socialModel : 'classic';
+    s.logoImage =
+      typeof s.logoImage === 'string' &&
+      s.logoImage.length < 1500000 &&
+      /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(s.logoImage)
+        ? s.logoImage
+        : '';
     for (const key of [
       'primary',
       'secondary',
@@ -130,6 +143,8 @@ window.OverlayThemes = (() => {
       '--theme-shine': s.shine === false || s.background === 'transparent' ? 'none' : 'block',
     }).forEach(([k, v]) => style.setProperty(k, v));
     document.documentElement.dataset.nameStyle = s.nameStyle;
+    document.documentElement.dataset.nameModel = s.nameModel;
+    document.documentElement.dataset.socialModel = s.socialModel;
     document.documentElement.dataset.transparent = s.background === 'transparent';
     return s;
   }

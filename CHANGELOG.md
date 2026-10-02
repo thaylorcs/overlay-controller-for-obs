@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added independent Sidebar and Identity with logo name layouts and a Capsule social layout.
+- Added local logo upload, backup support and model compatibility checks.
 - Added shared overlay themes, customizable backgrounds and live previews.
 - Matched the presenter name background and width to the lower card by default.
 - Added collapsible settings modules with General first and remembered open state.

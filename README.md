@@ -29,17 +29,21 @@ English is the default language for a fresh installation. Brazilian Portuguese c
 
 ## Themes and backgrounds
 
+Choose **Name overlay model** and **Social overlay model** in **Settings > Models, themes & background**, then choose a color theme independently. Names support **Classic** (two cards), **Sidebar** (a single panel with a vertical accent) and **Identity with logo** (a logo beside the information). Social networks support **Classic** and **Capsule** (rounded pills with circular icons); Capsule redistributes space when a network is empty.
+
+Identity accepts a local PNG, JPEG or WebP logo up to 1 MB, included in saved settings and JSON backups. Without a logo, a decorative symbol appears. The separate presenter background controls apply to Classic; Sidebar and Identity share a single surface. Existing configurations default to Classic. Save settings and trigger the overlay again to apply changes in OBS.
+
 Settings are grouped into collapsible modules. Click a module heading to open or close it, or use **Expand all / Collapse all**. The dock remembers open modules locally; folding preserves unsaved edits. **Save settings** remains accessible while scrolling.
 
 Open **Settings > Themes & background**. Choose Classic, Midnight, Minimal or Light, then customize the card background (solid, gradient, transparent or image), text colors, decorative accent, opacity, corners and animated shine. Both overlays use the same appearance. Opacity affects only the background, keeping text readable.
 
 PNG, JPEG and WebP backgrounds up to 1 MB are embedded locally and included in JSON exports. “Cover” fills and crops the image; “Contain” shows the whole image over the selected background color. Transparent mode removes the card surface; the OBS scene remains visible outside the cards in every mode.
 
-The live preview works without OBS and uses the first saved person and your social labels. Changes are applied to OBS on the next trigger after **Save settings**. Existing backups remain compatible. Keep `themes.js`, `themes.css`, `theme-editor.js` and `settings-modules.js` beside the three HTML files; reload the dock and browser sources after updating.
+The live preview works without OBS and uses the first saved person and your social labels. Changes are applied to OBS on the next trigger after **Save settings**. Existing backups remain compatible. Keep `themes.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` and `settings-modules.js` beside the three HTML files; reload the dock and browser sources after updating.
 
 By default, the presenter name matches the lower card: equal width, background, text color, corners, shine and decorative accents. Existing configurations also adopt this default. Choose **Presenter style > Custom** to use an independent opaque background and text color. In the default matching mode, background transparency and opacity apply to both panels.
 
-Browser regression checks: with Playwright installed and Microsoft Edge available, run `node test-themes.cjs`. Set `TEST_BROWSER=chrome` to use Chrome instead.
+Browser regression checks: with Playwright installed and Microsoft Edge available, run `node test-themes.cjs` and `node test-models.cjs`. Set `TEST_BROWSER=chrome` to use Chrome instead.
 
 ## Code formatting
 
@@ -85,6 +89,10 @@ OBS® e OBS Studio® são marcas registradas da Wizards of OBS LLC. Este é um p
 
 ### Temas e personalização
 
+Em **Configurações > Modelos, temas e fundo**, escolha o **Modelo do nome** e o **Modelo das redes** antes do tema de cores. Para nomes: **Clássico** (dois cartões), **Faixa lateral** (bloco único com destaque vertical) e **Identidade com logo** (logo ao lado das informações). Para redes: **Clássico** e **Cápsula** (faixas arredondadas com ícones circulares e espaço redistribuído quando uma rede está vazia).
+
+O modelo Identidade aceita logo local PNG, JPEG ou WebP de até 1 MB, salvo nas configurações e no backup JSON. Sem logo, aparece um símbolo decorativo. O fundo independente do nome é uma opção do Clássico; os outros modelos usam um fundo único. Configurações antigas continuam no Clássico. Salve e acione novamente o overlay para aplicar no OBS.
+
 As configurações estão organizadas em módulos recolhíveis. Clique no título para abrir ou fechar, ou use **Expandir tudo / Recolher tudo**. O dock lembra quais módulos ficaram abertos; recolher não descarta alterações em edição. **Salvar configurações** permanece acessível durante a rolagem.
 
 Por padrão, o nome do pregador acompanha o cartão inferior: mesma largura, fundo, cor do texto, cantos, brilho e detalhes laterais. Configurações existentes também recebem esse padrão. Em **Estilo do nome do pregador > Personalizado**, é possível usar fundo sólido opaco e cor de texto independentes. No modo padrão, a transparência e a opacidade do fundo valem para os dois cartões.
@@ -93,4 +101,4 @@ Em **Configurações (⚙) > Temas e fundo**, escolha Clássico, Noturno, Minima
 
 Imagens PNG, JPEG e WebP de até 1 MB ficam salvas localmente e acompanham o backup JSON. **Preencher** ocupa o cartão com recorte; **Conter** mostra a imagem inteira sobre a cor de fundo escolhida. O restante da fonte continua transparente sobre a cena do OBS.
 
-A prévia usa a primeira pessoa cadastrada e os textos das redes, sem precisar de conexão com o OBS. Clique em **Salvar configurações** para aplicar no próximo acionamento. Backups antigos continuam compatíveis. Mantenha os arquivos `themes.js`, `themes.css`, `theme-editor.js` e `settings-modules.js` junto dos HTMLs e recarregue o dock e as fontes após atualizar.
+A prévia usa a primeira pessoa cadastrada e os textos das redes, sem precisar de conexão com o OBS. Clique em **Salvar configurações** para aplicar no próximo acionamento. Backups antigos continuam compatíveis. Mantenha os arquivos `themes.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` e `settings-modules.js` junto dos HTMLs e recarregue o dock e as fontes após atualizar.

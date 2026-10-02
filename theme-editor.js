@@ -1,6 +1,16 @@
 const themeLabels = {
   en: {
-    appearance: 'Themes & background',
+    appearance: 'Models, themes & background',
+    nameModel: 'NAME OVERLAY MODEL',
+    socialModel: 'SOCIAL OVERLAY MODEL',
+    sidebar: 'Sidebar',
+    identity: 'Identity with logo',
+    capsule: 'Capsule',
+    classicModel: 'Classic',
+    logoUpload: 'Church logo (PNG, JPEG, WebP; max 1 MB)',
+    removeLogo: 'Remove logo',
+    modelHint:
+      'Models control the layout. Color themes can be changed independently. Without a logo, Identity shows a decorative symbol.',
     preset: 'THEME',
     classic: 'Classic · Wine',
     midnight: 'Midnight · Blue',
@@ -37,7 +47,17 @@ const themeLabels = {
       'Choose a theme as a starting point, then adjust its colors, background and corners. Images are included in JSON backups.',
   },
   'pt-BR': {
-    appearance: 'Temas e fundo',
+    appearance: 'Modelos, temas e fundo',
+    nameModel: 'MODELO DO NOME',
+    socialModel: 'MODELO DAS REDES',
+    sidebar: 'Faixa lateral',
+    identity: 'Identidade com logo',
+    capsule: 'Cápsula',
+    classicModel: 'Clássico',
+    logoUpload: 'Logo da igreja (PNG, JPEG, WebP; máx. 1 MB)',
+    removeLogo: 'Remover logo',
+    modelHint:
+      'Os modelos definem a disposição. Os temas de cores podem ser alterados separadamente. Sem logo, Identidade exibe um símbolo decorativo.',
     preset: 'TEMA',
     classic: 'Clássico · Vinho',
     midnight: 'Noturno · Azul',
@@ -82,7 +102,10 @@ themeLabels['pt-BR'].secondaryColor = 'DETALHES DO CARTÃO';
 for (const language of Object.keys(themeLabels))
   Object.assign(I18N[language], themeLabels[language]);
 let draftImage = '';
+let draftLogo = '';
 const extraFields = [
+  'nameModel',
+  'socialModel',
   'nameStyle',
   'background',
   'backgroundColor',
@@ -103,6 +126,16 @@ const field = (key, control) =>
   `<div class="field" data-field="${key}"><label for="${key}" data-i18n="${key}"></label>${control}</div>`;
 section.innerHTML =
   '<h3 data-i18n="appearance"></h3>' +
+  field(
+    'nameModel',
+    `<select id="nameModel"><option value="classic" data-i18n="classicModel"></option>${options(['sidebar', 'identity'])}</select>`,
+  ) +
+  field(
+    'socialModel',
+    `<select id="socialModel"><option value="classic" data-i18n="classicModel"></option>${options(['capsule'])}</select>`,
+  ) +
+  '<div class="hint" data-i18n="modelHint"></div>' +
+  '<div id="logoOptions"><div class="field"><label for="logoFile" data-i18n="logoUpload"></label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><button id="removeLogo" class="widebtn" data-i18n="removeLogo"></button></div>' +
   field(
     'preset',
     `<select id="preset">${options(['classic', 'midnight', 'minimal', 'light', 'custom'])}</select>`,
@@ -133,6 +166,7 @@ function readThemeDraft() {
     ...cfg.theme,
     preset: $('preset').value,
     backgroundImage: draftImage,
+    logoImage: draftLogo,
     shine: $('shine').checked,
     primary: $('primaryColor').value,
     secondary: $('secondaryColor').value,
@@ -148,6 +182,7 @@ function readThemeDraft() {
 function fillThemeEditor(s = cfg.theme) {
   s = OverlayThemes.normalize(s);
   draftImage = s.backgroundImage;
+  draftLogo = s.logoImage;
   for (const k of extraFields) $(k).value = s[k];
   $('preset').value = OverlayThemes.presets[s.preset] ? s.preset : 'custom';
   $('shine').checked = s.shine !== false;
@@ -156,7 +191,10 @@ function fillThemeEditor(s = cfg.theme) {
 function updateThemePreview() {
   const s = readThemeDraft();
   for (const k of ['nameColor', 'nameBackgroundColor'])
-    section.querySelector(`[data-field="${k}"]`).hidden = s.nameStyle === 'matched';
+    section.querySelector(`[data-field="${k}"]`).hidden =
+      s.nameStyle === 'matched' || s.nameModel !== 'classic';
+  section.querySelector('[data-field="nameStyle"]').hidden = s.nameModel !== 'classic';
+  $('logoOptions').hidden = s.nameModel !== 'identity';
   $('imageOptions').hidden = s.background !== 'image';
   for (const k of ['backgroundEnd', 'backgroundAngle'])
     section.querySelector(`[data-field="${k}"]`).hidden = s.background !== 'gradient';
@@ -188,12 +226,19 @@ $('preset').onchange = () => {
     $(id).value = p[key];
     $(id + 'Picker').value = p[key];
   }
-  fillThemeEditor({ ...readThemeDraft(), ...p });
+  const draft = readThemeDraft();
+  fillThemeEditor({
+    ...draft,
+    ...p,
+    nameModel: draft.nameModel,
+    socialModel: draft.socialModel,
+    logoImage: draft.logoImage,
+  });
 };
 $('settings').addEventListener('input', (e) => {
-  if (e.target.id === 'backgroundFile' || e.target.id === 'preset') return;
+  if (['backgroundFile', 'logoFile', 'preset'].includes(e.target.id)) return;
   if (
-    extraFields.includes(e.target.id) ||
+    (extraFields.includes(e.target.id) && !['nameModel', 'socialModel'].includes(e.target.id)) ||
     [
       'shine',
       'primaryColor',
@@ -205,7 +250,7 @@ $('settings').addEventListener('input', (e) => {
     $('preset').value = 'custom';
   updateThemePreview();
 });
-$('backgroundFile').onchange = async (e) => {
+async function uploadThemeImage(e, isLogo) {
   const file = e.target.files[0];
   if (!file) return;
   if (file.size > 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
@@ -223,13 +268,21 @@ $('backgroundFile').onchange = async (e) => {
     const img = new Image();
     img.src = url;
     await img.decode();
-    draftImage = url;
-    $('preset').value = 'custom';
+    if (isLogo) draftLogo = url;
+    else draftImage = url;
+    if (!isLogo) $('preset').value = 'custom';
     updateThemePreview();
   } catch {
     status(t('imageError'), true);
   }
   e.target.value = '';
+}
+
+$('backgroundFile').onchange = (e) => uploadThemeImage(e, false);
+$('logoFile').onchange = (e) => uploadThemeImage(e, true);
+$('removeLogo').onclick = () => {
+  draftLogo = '';
+  updateThemePreview();
 };
 $('removeImage').onclick = () => {
   draftImage = '';
