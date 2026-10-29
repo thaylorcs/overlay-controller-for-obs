@@ -1,8 +1,15 @@
 /* Shared appearance contract for the controller and both OBS browser sources. */
 window.OverlayThemes = (() => {
+  const nameLimits = Object.freeze({
+    minWidth: 420,
+    maxWidth: 1728,
+    defaultWidth: 700,
+    minFontSize: 32,
+  });
   const defaults = {
     preset: 'classic',
     nameModel: 'classic',
+    nameAutoFit: false,
     socialModel: 'classic',
     logoImage: '',
     nameStyle: 'matched',
@@ -105,7 +112,13 @@ window.OverlayThemes = (() => {
     s.backgroundOpacity = number(s.backgroundOpacity, 100, 0, 100);
     s.backgroundAngle = number(s.backgroundAngle, 135, 0, 360);
     s.radius = number(s.radius, 12, 0, 40);
-    s.nameWidth = number(s.nameWidth, 700, 420, 1200);
+    s.nameWidth = number(
+      s.nameWidth,
+      nameLimits.defaultWidth,
+      nameLimits.minWidth,
+      nameLimits.maxWidth,
+    );
+    s.nameAutoFit = s.nameAutoFit === true;
     s.duration = number(s.duration, 30, 3, 300);
     s.namePosition = ['left', 'center', 'right'].includes(s.namePosition)
       ? s.namePosition
@@ -148,5 +161,5 @@ window.OverlayThemes = (() => {
     document.documentElement.dataset.transparent = s.background === 'transparent';
     return s;
   }
-  return { defaults, presets, normalize, apply };
+  return { defaults, presets, normalize, apply, nameLimits };
 })();

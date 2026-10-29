@@ -2,6 +2,8 @@
 
 Free, local, ad-free overlay controller designed to work with OBS Studio. It includes animated name lower thirds and a three-network social overlay, controlled from a Custom Browser Dock.
 
+For a detailed project walkthrough in Brazilian Portuguese, see [Project documentation](DOCUMENTACAO.pt-BR.md).
+
 ## Features
 
 - English by default, with Brazilian Portuguese available in Settings
@@ -29,6 +31,8 @@ English is the default language for a fresh installation. Brazilian Portuguese c
 
 ## Themes and backgrounds
 
+New installations start with the **Classic** name and social layouts. Updating preserves the operator's saved layout choices; select Classic and save to switch an existing installation back.
+
 Choose **Name overlay model** and **Social overlay model** in **Settings > Models, themes & background**, then choose a color theme independently. Names support **Classic** (two cards), **Sidebar** (a single panel with a vertical accent) and **Identity with logo** (a logo beside the information). Social networks support **Classic** and **Capsule** (rounded pills with circular icons); Capsule redistributes space when a network is empty.
 
 Identity accepts a local PNG, JPEG or WebP logo up to 1 MB, included in saved settings and JSON backups. Without a logo, a decorative symbol appears. The separate presenter background controls apply to Classic; Sidebar and Identity share a single surface. Existing configurations default to Classic. Save settings and trigger the overlay again to apply changes in OBS.
@@ -39,11 +43,17 @@ Open **Settings > Themes & background**. Choose Classic, Midnight, Minimal or Li
 
 PNG, JPEG and WebP backgrounds up to 1 MB are embedded locally and included in JSON exports. “Cover” fills and crops the image; “Contain” shows the whole image over the selected background color. Transparent mode removes the card surface; the OBS scene remains visible outside the cards in every mode.
 
-The live preview works without OBS and uses the first saved person and your social labels. Changes are applied to OBS on the next trigger after **Save settings**. Existing backups remain compatible. Keep `themes.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` and `settings-modules.js` beside the three HTML files; reload the dock and browser sources after updating.
+The live preview works without OBS and uses the first saved person and your social labels. Changes are applied to OBS on the next trigger after **Save settings**. Existing backups remain compatible. Keep `themes.js`, `name-layout.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` and `settings-modules.js` beside the three HTML files; reload the dock and browser sources after updating.
 
 By default, the presenter name matches the lower card: equal width, background, text color, corners, shine and decorative accents. Existing configurations also adopt this default. Choose **Presenter style > Custom** to use an independent opaque background and text color. In the default matching mode, background transparency and opacity apply to both panels.
 
 Browser regression checks: with Playwright installed and Microsoft Edge available, run `node test-themes.cjs` and `node test-models.cjs`. Set `TEST_BROWSER=chrome` to use Chrome instead.
+
+### Long presenter names
+
+Name width supports **420–1728 px** on a **1920×250** Browser Source. The maximum keeps 96 px side margins. Enable **Automatically fit long names** in the name settings to grow from the saved width up to that maximum, then reduce only the name font down to **32 px** if needed. Short names keep the saved width. Existing backups retain their widths and default to automatic fitting off.
+
+There is no wrapping or required source-height change. Names exceeding the available space even at 32 px retain an ellipsis; the live preview shows a warning for its displayed person. Abbreviate those names or choose a narrower font. Layout fitting depends on the actual font, not a fixed character count. Save settings and trigger again in OBS. Browser checks: `node test-name-layout.cjs`; validate show/hide and automatic exit in OBS as well.
 
 ## Code formatting
 
@@ -87,7 +97,15 @@ OBS® and OBS Studio® are trademarks of Wizards of OBS LLC. This independent pr
 
 OBS® e OBS Studio® são marcas registradas da Wizards of OBS LLC. Este é um projeto independente e não possui afiliação, patrocínio ou endosso do OBS Project ou da Wizards of OBS LLC.
 
+### Nomes longos
+
+A largura aceita **420–1728 px** na fonte de **1920×250**, mantendo margens laterais de 96 px no limite máximo. Em **Lower third de nomes**, ative **Ajustar nomes longos automaticamente**: o cartão cresce a partir da largura salva e só depois reduz a fonte do nome, até **32 px**. Nomes curtos preservam a largura escolhida. Backups antigos mantêm suas larguras e iniciam com essa opção desligada.
+
+Não há quebra de linha nem mudança na altura da fonte do OBS. Se o nome ainda não couber, ele recebe reticências e o painel avisa sobre a pessoa exibida na prévia. Nesse caso, abrevie o nome ou escolha uma fonte mais estreita. Não existe um limite universal de caracteres, pois a largura depende da fonte. Salve e acione novamente para testar no OBS.
+
 ### Temas e personalização
+
+Novas instalações iniciam com o modelo **Clássico** para nomes e redes. Atualizações preservam os modelos já salvos pelo operador; para voltar ao Clássico em uma instalação existente, selecione-o e salve.
 
 Em **Configurações > Modelos, temas e fundo**, escolha o **Modelo do nome** e o **Modelo das redes** antes do tema de cores. Para nomes: **Clássico** (dois cartões), **Faixa lateral** (bloco único com destaque vertical) e **Identidade com logo** (logo ao lado das informações). Para redes: **Clássico** e **Cápsula** (faixas arredondadas com ícones circulares e espaço redistribuído quando uma rede está vazia).
 
@@ -101,4 +119,4 @@ Em **Configurações (⚙) > Temas e fundo**, escolha Clássico, Noturno, Minima
 
 Imagens PNG, JPEG e WebP de até 1 MB ficam salvas localmente e acompanham o backup JSON. **Preencher** ocupa o cartão com recorte; **Conter** mostra a imagem inteira sobre a cor de fundo escolhida. O restante da fonte continua transparente sobre a cena do OBS.
 
-A prévia usa a primeira pessoa cadastrada e os textos das redes, sem precisar de conexão com o OBS. Clique em **Salvar configurações** para aplicar no próximo acionamento. Backups antigos continuam compatíveis. Mantenha os arquivos `themes.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` e `settings-modules.js` junto dos HTMLs e recarregue o dock e as fontes após atualizar.
+A prévia usa a primeira pessoa cadastrada e os textos das redes, sem precisar de conexão com o OBS. Clique em **Salvar configurações** para aplicar no próximo acionamento. Backups antigos continuam compatíveis. Mantenha os arquivos `themes.js`, `name-layout.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` e `settings-modules.js` junto dos HTMLs e recarregue o dock e as fontes após atualizar.

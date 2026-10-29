@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Increased presenter width to 1728 px and added optional expand-first fitting with a 32 px font floor, preview truncation warning and browser regression coverage.
+
 - Added independent Sidebar and Identity with logo name layouts and a Capsule social layout.
 - Added local logo upload, backup support and model compatibility checks.
 - Added shared overlay themes, customizable backgrounds and live previews.

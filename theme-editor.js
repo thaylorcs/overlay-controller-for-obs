@@ -1,6 +1,11 @@
 const themeLabels = {
   en: {
     appearance: 'Models, themes & background',
+    nameAutoFit: 'Automatically fit long names',
+    nameFitHint:
+      'Starts at the saved width, expands up to 1728 px, then reduces the name to a minimum of 32 px. The saved width is unchanged.',
+    nameFitWarning:
+      'The preview name is still truncated. Enable automatic fitting, increase the width or shorten the name.',
     nameModel: 'NAME OVERLAY MODEL',
     socialModel: 'SOCIAL OVERLAY MODEL',
     sidebar: 'Sidebar',
@@ -48,6 +53,11 @@ const themeLabels = {
   },
   'pt-BR': {
     appearance: 'Modelos, temas e fundo',
+    nameAutoFit: 'Ajustar nomes longos automaticamente',
+    nameFitHint:
+      'Parte da largura salva, amplia até 1728 px e só então reduz o nome até o mínimo de 32 px. A largura salva não é alterada.',
+    nameFitWarning:
+      'O nome da prévia ainda está cortado. Ative o ajuste automático, aumente a largura ou abrevie o nome.',
     nameModel: 'MODELO DO NOME',
     socialModel: 'MODELO DAS REDES',
     sidebar: 'Faixa lateral',
@@ -101,6 +111,13 @@ themeLabels['pt-BR'].primaryColor = 'DESTAQUE DO PAINEL';
 themeLabels['pt-BR'].secondaryColor = 'DETALHES DO CARTÃO';
 for (const language of Object.keys(themeLabels))
   Object.assign(I18N[language], themeLabels[language]);
+$('nameWidth').min = OverlayThemes.nameLimits.minWidth;
+$('nameWidth').max = OverlayThemes.nameLimits.maxWidth;
+const fittingControls = document.createElement('div');
+fittingControls.innerHTML =
+  '<div class="field"><label><input id="nameAutoFit" type="checkbox" style="width:auto;height:auto"> <span data-i18n="nameAutoFit"></span></label><div class="hint" data-i18n="nameFitHint"></div></div>';
+$('nameWidth').closest('.grid2').after(fittingControls);
+let previewRevision = 0;
 let draftImage = '';
 let draftLogo = '';
 const extraFields = [
@@ -158,7 +175,7 @@ section.innerHTML =
   field('imageFit', `<select id="imageFit">${options(['cover', 'contain'])}</select>`) +
   '<div class="field"><label for="backgroundFile" data-i18n="imageUpload"></label><input id="backgroundFile" type="file" accept="image/png,image/jpeg,image/webp"></div><button id="removeImage" class="widebtn" data-i18n="removeImage"></button></div>' +
   '<div class="field"><label><input id="shine" type="checkbox" style="width:auto;height:auto"> <span data-i18n="shine"></span></label></div>' +
-  '<h3 data-i18n="preview"></h3><div class="overlayPreview"><iframe id="namePreview" title="Name overlay preview" src="name-overlay.html?preview"></iframe><iframe id="socialPreview" title="Social overlay preview" src="social-overlay.html?preview"></iframe></div><div class="hint" data-i18n="previewHint"></div>';
+  '<p id="nameFitWarning" role="status" data-i18n="nameFitWarning" hidden style="color:#ffd38a"></p><h3 data-i18n="preview"></h3><div class="overlayPreview"><iframe id="namePreview" title="Name overlay preview" src="name-overlay.html?preview"></iframe><iframe id="socialPreview" title="Social overlay preview" src="social-overlay.html?preview"></iframe></div><div class="hint" data-i18n="previewHint"></div>';
 // Keep General first; appearance follows the main configuration.
 $('language').closest('.settingsSection').after(section);
 function readThemeDraft() {
@@ -172,6 +189,7 @@ function readThemeDraft() {
     secondary: $('secondaryColor').value,
     font: $('font').value,
     nameWidth: $('nameWidth').value,
+    nameAutoFit: $('nameAutoFit').checked,
     namePosition: $('namePosition').value,
     nameShadow: $('nameShadow').checked,
     duration: $('duration').value,
@@ -182,6 +200,7 @@ function readThemeDraft() {
 function fillThemeEditor(s = cfg.theme) {
   s = OverlayThemes.normalize(s);
   draftImage = s.backgroundImage;
+  $('nameAutoFit').checked = s.nameAutoFit;
   draftLogo = s.logoImage;
   for (const k of extraFields) $(k).value = s[k];
   $('preset').value = OverlayThemes.presets[s.preset] ? s.preset : 'custom';
@@ -201,12 +220,15 @@ function updateThemePreview() {
   for (const k of ['backgroundColor', 'backgroundOpacity'])
     section.querySelector(`[data-field="${k}"]`).hidden = s.background === 'transparent';
   const settings = { ...s, duration: 300 };
+  const revision = ++previewRevision;
+  $('nameFitWarning').hidden = true;
   $('namePreview').contentWindow.postMessage(
     {
       type: 'overlay-preview',
       payload: {
         ...(cfg.people[0] || { name: 'Example', role: 'Presenter', instagram: 'example' }),
         _settings: settings,
+        _previewRevision: revision,
       },
     },
     '*',
@@ -231,6 +253,7 @@ $('preset').onchange = () => {
     ...draft,
     ...p,
     nameModel: draft.nameModel,
+    nameAutoFit: draft.nameAutoFit,
     socialModel: draft.socialModel,
     logoImage: draft.logoImage,
   });
@@ -317,3 +340,13 @@ new ResizeObserver(() => {
 }).observe(previewBox);
 fillThemeEditor();
 applyI18n();
+
+window.addEventListener('message', (event) => {
+  if (
+    event.source !== $('namePreview').contentWindow ||
+    event.data?.type !== 'name-layout-result' ||
+    event.data.revision !== previewRevision
+  )
+    return;
+  $('nameFitWarning').hidden = event.data.clipped !== true;
+});

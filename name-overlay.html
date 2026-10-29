@@ -187,6 +187,7 @@
     <link rel="stylesheet" href="themes.css" />
     <link rel="stylesheet" href="overlay-models.css" />
     <script src="themes.js"></script>
+    <script src="name-layout.js"></script>
   </head>
   <body>
     <div class="stage">
@@ -240,13 +241,16 @@
         social = document.getElementById('social');
       let timer = null,
         finishTimer = null;
+      let layoutGeneration = 0;
       function hide() {
+        layoutGeneration++;
         clearTimeout(timer);
         clearTimeout(finishTimer);
         lower.classList.remove('show');
         lower.style.transform = lower.style.transform.replace(/,\s*0(?:px)?\)/, ',12px)');
       }
       function show(data) {
+        const generation = ++layoutGeneration;
         clearTimeout(timer);
         clearTimeout(finishTimer);
         lower.classList.remove('show');
@@ -278,7 +282,7 @@
           '--name-shadow',
           s.nameShadow === false ? 'none' : '0 2px 3px rgba(0,0,0,.35)',
         );
-        const width = Math.max(420, Math.min(1200, Number(s.nameWidth) || 700));
+        const width = s.nameWidth;
         document.querySelector('.card').style.width = width + 'px';
         lower.style.width = width + 'px';
         lower.style.left =
@@ -294,6 +298,18 @@
         roleEl.hidden = !data.role;
         igEl.textContent = (data.instagram || '').replace(/^@/, '').toUpperCase();
         social.style.display = data.instagram ? 'flex' : 'none';
+        const updateLayout = () => {
+          if (generation !== layoutGeneration) return;
+          const result = fitPresenterName(s);
+          if (new URLSearchParams(location.search).has('preview') && parent !== window) {
+            parent.postMessage(
+              { type: 'name-layout-result', revision: data._previewRevision, ...result },
+              '*',
+            );
+          }
+        };
+        updateLayout();
+        document.fonts.ready.then(updateLayout);
         void lower.offsetWidth;
         lower.classList.add('show');
         if (s.namePosition === 'left') lower.style.transform = 'translate(0,0)';

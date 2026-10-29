@@ -564,8 +564,7 @@
           </div>
           <div class="grid2">
             <div class="field">
-              <label data-i18n="width"></label
-              ><input id="nameWidth" type="number" min="420" max="1200" />
+              <label data-i18n="width"></label><input id="nameWidth" type="number" />
             </div>
             <div class="field">
               <label data-i18n="position"></label
@@ -735,6 +734,8 @@
         people: [{ name: 'Example', role: 'Presenter', instagram: 'example' }],
         social: { youtube: 'Your channel', facebook: 'Your page', instagram: 'yourinstagram' },
         theme: {
+          nameModel: OverlayThemes.defaults.nameModel,
+          socialModel: OverlayThemes.defaults.socialModel,
           duration: 30,
           font: '"Segoe UI",Arial,sans-serif',
           nameShadow: true,
@@ -1058,7 +1059,9 @@
         cfg.theme.nameShadow = $('nameShadow').checked;
         cfg.theme.primary = $('primaryColor').value || '#741D2B';
         cfg.theme.secondary = $('secondaryColor').value || '#D6C6B4';
-        cfg.theme.nameWidth = Math.max(420, Math.min(1200, Number($('nameWidth').value) || 700));
+        cfg.theme.nameWidth = OverlayThemes.normalize({
+          nameWidth: $('nameWidth').value,
+        }).nameWidth;
         cfg.theme.namePosition = $('namePosition').value;
         const changed =
           cfg.ws.host !== ($('host').value.trim() || '127.0.0.1') ||
