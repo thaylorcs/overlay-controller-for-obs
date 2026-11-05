@@ -1,18 +1,19 @@
 # Overlay Controller for OBS — documentação do projeto
 
-Guia de operação e manutenção, baseado no código da versão v1.2.0, commit `9d4b250`. Preparado em 2 de outubro de 2026.
+Guia de operação e manutenção atualizado em 5 de novembro de 2026. Versão v1.3.0, incluindo nomes longos e tópico. A base funcional é o commit `c667aa7`; a tag `v1.3.0` também inclui a revisão de documentação da issue #6. Consulte também o [README bilíngue](README.md) e o [changelog](CHANGELOG.md).
 
 ## 1. O que o projeto faz
 
 O projeto exibe informações sobre o vídeo de uma transmissão no OBS. O operador cadastra pessoas e redes sociais em um painel e aciona a entrada ou saída dos gráficos. Esses gráficos são chamados de overlays; o cartão com o nome do pregador é um lower third.
 
-Existem três páginas principais:
+Existem quatro páginas principais:
 
 - `controller.html`: painel de operação, instalado como dock do OBS.
 - `name-overlay.html`: fonte de navegador que exibe nome, cargo e Instagram da pessoa.
 - `social-overlay.html`: fonte de navegador que exibe YouTube, Facebook e Instagram.
+- `topic-overlay.html`: fonte de navegador que exibe o tópico e um título opcional, com duração e rolagem controladas.
 
-O painel não é a imagem transmitida. As duas fontes de navegador são as responsáveis por desenhar os gráficos sobre a cena.
+O painel não é a imagem transmitida. As três fontes de navegador são as responsáveis por desenhar os gráficos sobre a cena.
 
 O programa usa HTML, CSS e JavaScript, sem framework, servidor próprio ou banco de dados. Não existe etapa de compilação. O navegador incorporado no OBS executa os arquivos locais; o servidor WebSocket do próprio OBS recebe os comandos. Node.js, Python e Playwright não são necessários para operar a transmissão. Node.js e Playwright são usados nos testes de desenvolvimento.
 
@@ -25,7 +26,7 @@ O programa usa HTML, CSS e JavaScript, sem framework, servidor próprio ou banco
 
 Alterar uma pasta não atualiza a outra automaticamente. A cópia para a pasta do OBS precisa ser feita após as alterações que serão testadas.
 
-Os três caminhos esperados na instalação atual são:
+Os quatro caminhos esperados na instalação atual são:
 
 ```text
 Dock:
@@ -36,6 +37,9 @@ C:\OBSIgreja\overlay-controller-for-obs\name-overlay.html
 
 Fonte de redes:
 C:\OBSIgreja\overlay-controller-for-obs\social-overlay.html
+
+Fonte de tópico:
+C:\OBSIgreja\overlay-controller-for-obs\topic-overlay.html
 ```
 
 Já houve um caso em que a prévia estava correta, mas a fonte Nome apontava para uma pasta antiga com `v1.0` no caminho. Por isso, o caminho configurado em cada fonte é uma das primeiras verificações quando os resultados diferem.
@@ -49,6 +53,8 @@ flowchart LR
   Controller -->|WebSocket local| OBS[OBS]
   OBS -->|obs-browser: evento de nomes| Names[name-overlay.html]
   OBS -->|obs-browser: evento de redes| Social[social-overlay.html]
+  OBS -->|obs-browser: evento de tópico| Topic[topic-overlay.html]
+  Topic --> Scene[Cena transmitida]
   Names --> Scene[Cena transmitida]
   Social --> Scene
   Controller -->|postMessage: somente prévia| Preview[Os mesmos overlays em iframes]
@@ -64,16 +70,18 @@ flowchart LR
 6. `show()` aplica o tema, preenche os textos, seleciona o modelo e inicia a animação.
 7. Um temporizador oculta o gráfico ao terminar a duração configurada. O operador também pode clicar novamente para ocultá-lo antes.
 
-O overlay de redes usa o mesmo caminho, com eventos próprios.
+Os overlays de redes e tópico usam o mesmo caminho, com eventos próprios. A prévia em iframes existe apenas para nomes e redes.
 
 ### Eventos existentes
 
-| Evento              | Consumidor            | Efeito                    |
-| ------------------- | --------------------- | ------------------------- |
-| `oocLowerThirdShow` | `name-overlay.html`   | Atualiza e exibe a pessoa |
-| `oocLowerThirdHide` | `name-overlay.html`   | Oculta a pessoa           |
-| `oocSocialShow`     | `social-overlay.html` | Atualiza e exibe as redes |
-| `oocSocialHide`     | `social-overlay.html` | Oculta as redes           |
+| Evento              | Consumidor            | Efeito                                      |
+| ------------------- | --------------------- | ------------------------------------------- |
+| `oocLowerThirdShow` | `name-overlay.html`   | Atualiza e exibe a pessoa                   |
+| `oocLowerThirdHide` | `name-overlay.html`   | Oculta a pessoa                             |
+| `oocSocialShow`     | `social-overlay.html` | Atualiza e exibe as redes                   |
+| `oocSocialHide`     | `social-overlay.html` | Oculta as redes                             |
+| `oocTopicShow`      | `topic-overlay.html`  | Atualiza e exibe mensagem e título opcional |
+| `oocTopicHide`      | `topic-overlay.html`  | Oculta mensagem e título                    |
 
 O conteúdo chega em `event.detail`. `_settings` contém o tema completo. O painel também inclui `_ws`, mas os overlays atuais não abrem uma conexão WebSocket a partir desse campo.
 
@@ -85,7 +93,7 @@ O endereço padrão é `ws://127.0.0.1:4455`, usando o subprotocolo `obswebsocke
 
 Após uma desconexão, as tentativas usam intervalos progressivos: 2, 4, 8, 16 e até 30 segundos. `connectGeneration` impede que callbacks de conexões antigas alterem a sessão atual.
 
-A indicação “no ar” no painel é local. Ela é atualizada por cliques e temporizadores, com margens de 1,2 segundo para nomes e 1,8 segundo para redes. Não é uma confirmação de que o gráfico está visível na saída final do OBS.
+A indicação “no ar” no painel é local. Ela é atualizada por cliques e temporizadores, com margens de 1,2 segundo para nomes e 1,8 segundo para redes. Não é uma confirmação de que o gráfico está visível na saída final do OBS. O tópico usa um temporizador local próprio no painel: se a passagem terminar antes, o botão pode continuar indicando Ocultar tópico até esse prazo. O primeiro clique nesse intervalo apenas limpa o estado; a correção está na [issue #8](https://github.com/thaylorcs/overlay-controller-for-obs/issues/8).
 
 ## 4. Mapa de todos os arquivos
 
@@ -113,9 +121,11 @@ A indicação “no ar” no painel é local. Ela é atualizada por cliques e te
 
 A pasta oculta `.git` contém o histórico e os metadados do repositório. Não é uma dependência da aplicação e não precisa ser copiada para executar no OBS.
 
+Os arquivos `topic-overlay.html`, `topic-settings.js` e `test-topic.cjs` foram acrescentados para a fonte de tópico, a normalização/cálculo de duração e seus testes. `AGENTS.md` registra as instruções de desenvolvimento e entrega. `docs/capture-layouts.cjs` gera os seis exemplos de `docs/images/` usados no README; imagens e script de captura não são dependências de execução.
+
 ### Arquivos necessários para executar
 
-Mantenha os três HTMLs e estes seis arquivos juntos: `themes.js`, `name-layout.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` e `settings-modules.js`.
+Mantenha os **11 arquivos de execução** juntos: `controller.html`, `name-overlay.html`, `social-overlay.html`, `topic-overlay.html`, `themes.js`, `themes.css`, `name-layout.js`, `overlay-models.css`, `theme-editor.js`, `settings-modules.js` e `topic-settings.js`.
 
 Os arquivos de teste, documentação e configuração do editor não são carregados pela aplicação. Os ícones sociais são SVGs embutidos no HTML; não dependem de downloads externos. Logo e fundo enviados pelo painel ficam incorporados à configuração.
 
@@ -125,6 +135,7 @@ No controlador, a sequência é:
 
 ```text
 themes.js
+  → topic-settings.js
   → script interno de controller.html
   → theme-editor.js
   → settings-modules.js
@@ -132,7 +143,7 @@ themes.js
 
 O editor visual depende de variáveis e funções globais do controlador, como `cfg`, `$`, `I18N`, `fillSettings()` e `applyI18n()`. Ele amplia o preenchimento e o salvamento das configurações. O script dos módulos deve executar por último para incluir a seção inserida pelo editor visual.
 
-Nos overlays, os estilos internos definem a base; `themes.css` aplica a aparência comum; `overlay-models.css` sobrescreve o layout quando necessário. `themes.js` precisa estar carregado antes de chamar `show()`.
+Nos overlays, os estilos internos definem a base; `themes.css` aplica a aparência comum; `overlay-models.css` sobrescreve o layout quando necessário. `themes.js` precisa estar carregado antes de chamar `show()`. A fonte de nomes também carrega `name-layout.js`; a fonte de tópico carrega `topic-settings.js` e não usa os modelos de nomes/redes de `overlay-models.css`.
 
 ## 5. Modelo e tema são escolhas diferentes
 
@@ -167,27 +178,38 @@ O CSS usa esses atributos para escolher as regras adequadas. Os modelos atuais r
 
 ## 6. Configuração e armazenamento
 
-O objeto principal se chama `cfg` e tem seis campos principais:
+O objeto principal se chama `cfg` e tem oito campos principais:
 
-| Grupo      | Conteúdo                                                        |
-| ---------- | --------------------------------------------------------------- |
-| `version`  | Campo de versão mantido no JSON; o padrão atual ainda é `1.0.0` |
-| `language` | `en`, `pt-BR` ou `auto`                                         |
-| `people`   | Lista de objetos com `name`, `role` e `instagram`               |
-| `social`   | Textos `youtube`, `facebook` e `instagram`                      |
-| `theme`    | Modelo, cores, fundos, imagens e dimensões                      |
-| `ws`       | Host e porta do OBS                                             |
+| Grupo          | Conteúdo                                                        |
+| -------------- | --------------------------------------------------------------- |
+| `version`      | Campo de versão mantido no JSON; o padrão atual ainda é `1.0.0` |
+| `language`     | `en`, `pt-BR` ou `auto`                                         |
+| `people`       | Lista de objetos com `name`, `role` e `instagram`               |
+| `social`       | Textos `youtube`, `facebook` e `instagram`                      |
+| `theme`        | Modelo, cores, fundos, imagens e dimensões                      |
+| `ws`           | Host e porta do OBS                                             |
+| `topic`        | Texto da mensagem do tópico                                     |
+| `topicOptions` | Título opcional, interruptores, duração e velocidade            |
 
 O campo `version` não acompanha automaticamente as releases do GitHub e não deve ser usado para descobrir a versão do código instalado. Consulte a release ou o commit de origem.
 
 ### Exemplo reduzido de JSON
 
-Os campos visuais omitidos são completados com valores padrão durante a normalização.
+Os campos visuais omitidos são completados com valores padrão durante a normalização. Se `topic` ou `topicOptions` não existirem em um backup antigo, recebem os padrões descritos abaixo.
 
 ```json
 {
   "version": "1.0.0",
   "language": "pt-BR",
+  "topic": "Uma mensagem de esperança",
+  "topicOptions": {
+    "headingEnabled": true,
+    "heading": "Tema da mensagem",
+    "customDuration": false,
+    "automatic": true,
+    "duration": 30,
+    "speed": 160
+  },
   "people": [
     {
       "name": "Pr. João da Silva",
@@ -246,6 +268,25 @@ Os campos visuais omitidos são completados com valores padrão durante a normal
 | `shine`                            | Controle do brilho animado nas superfícies que implementam o efeito                            |
 | `logoImage`                        | Logo incorporado como data URL para Identidade                                                 |
 
+### Dados e comportamento do tópico
+
+`cfg.topic` contém o texto da mensagem. `cfg.topicOptions` armazena:
+
+| Campo            | Significado                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| `headingEnabled` | Interruptor do título; padrão ligado                                                       |
+| `heading`        | Título estático, inicialmente `Tema da mensagem`; editável, inclusive na interface inglesa |
+| `customDuration` | Duração própria; padrão desligado, usando a duração geral                                  |
+| `automatic`      | Modo automático quando a duração própria estiver ligada; padrão ligado                     |
+| `duration`       | Tempo manual de 3 a 3600 segundos; padrão 30                                               |
+| `speed`          | Velocidade de 40 a 480 px/s; padrão 160                                                    |
+
+`TopicSettings.normalize()` fornece valores padrão para backups antigos, que iniciam sem mensagem. Desligar o título preserva seu texto. O título compartilha a fonte e as cores da mensagem, fica acima dela e usa reticências se necessário para preservar a fonte em 1920×250.
+
+O texto principal é medido no navegador após aplicar a fonte. Se couber, fica centralizado. Se exceder o espaço, a animação percorre a largura disponível mais a largura real do texto, à velocidade escolhida, em **uma única passagem**. Ao terminar, oculta o tópico e o título. `ResizeObserver` e eventos de fontes refazem o cálculo; a passagem é reiniciada quando o layout é recalculado.
+
+O modo automático estima leitura por caracteres: usa 15 caracteres/segundo na velocidade padrão, reserva um deslocamento de 1728 px mais 64 px por caractere, considera a velocidade e adiciona 3 segundos. O cálculo tem mínimo de 5 segundos e máximo de uma hora. O painel mostra a estimativa, mas a fonte usa a largura real na animação. A saída acontece no primeiro evento entre timeout e passagem concluída; portanto, um limite curto pode cortar uma mensagem. A [issue #9](https://github.com/thaylorcs/overlay-controller-for-obs/issues/9) trata da política de duração e da garantia de passagem no modo automático.
+
 ### Onde os dados ficam
 
 O controlador grava no `localStorage` do navegador que o executa:
@@ -259,7 +300,7 @@ A primeira chave contém a configuração principal; a segunda contém o estado 
 
 Abrir o controlador no Edge e abri-lo no dock do OBS não implica compartilhar configurações. O armazenamento pertence ao ambiente do navegador; a pasta do projeto não contém um arquivo automático com o cadastro do operador. Para transportar os dados, use exportação e importação JSON.
 
-Pessoas e redes são persistidas ao salvar seus respectivos editores. O idioma é persistido ao ser alterado. As opções visuais são exibidas na prévia durante a edição, mas dependem de **Salvar configurações** para serem usadas nos próximos acionamentos do OBS.
+Pessoas e redes são persistidas ao salvar seus respectivos editores. Na aba Tópico, tanto Salvar como Mostrar tópico gravam mensagem, título, interruptores, duração e velocidade. Salvar enquanto está no ar envia uma nova exibição e reinicia o timeout. Exportar inclui somente dados já salvos, não as edições pendentes nos formulários. Importar aplica e grava imediatamente, atualiza os campos e reconecta; não exige outro clique em Salvar. O idioma é persistido ao ser alterado. As opções visuais são exibidas na prévia durante a edição, mas dependem de **Salvar configurações** para serem usadas nos próximos acionamentos do OBS.
 
 ### Imagens e compatibilidade
 
@@ -267,11 +308,17 @@ O upload aceita PNG, JPEG e WebP de até 1 MiB por arquivo, apresentado na inter
 
 `OverlayThemes.normalize()` limita números, valida cores hexadecimais de seis dígitos e restringe data URLs de imagens. Valores de modelo desconhecidos voltam ao Clássico. `normalizePerson()` aceita os campos antigos `nome` e `cargo`.
 
-A normalização não é um validador completo de qualquer JSON arbitrário. A importação exige os grupos `people`, `social` e `theme`, mas não verifica exaustivamente todos os tipos de dados. Prefira arquivos exportados pelo próprio programa.
+Exporte um backup conhecido antes de importar. O fluxo atual não garante restaurar o estado anterior após uma falha; isso é acompanhado na issue #1. A normalização não é um validador completo de qualquer JSON arbitrário. A importação exige os grupos `people`, `social` e `theme`, mas não verifica exaustivamente todos os tipos de dados. Prefira arquivos exportados pelo próprio programa.
+
+### Ajuste de nomes longos
+
+O ajuste opcional em `name-layout.js` começa na largura salva (420–1728 px, padrão 700), mede o nome na fonte real e amplia o cartão até 1728 px ou 90% da área disponível. Se ainda faltar espaço, reduz a fonte apenas do nome até 32 px. Não quebra linhas e não muda a altura de 250 px. O padrão do ajuste é desligado para preservar configurações anteriores. Nomes curtos mantêm a largura salva; um nome ainda maior recebe reticências, com aviso na prévia da pessoa exibida.
 
 ## 7. Prévia e transmissão real
 
 O painel carrega os mesmos HTMLs em dois iframes, acrescentando `?preview` ao endereço. `updateThemePreview()` envia `postMessage` com o tipo `overlay-preview`. Os overlays só aceitam esse caminho quando o parâmetro de prévia existe e a mensagem vem do pai do iframe.
+
+Não existe prévia de tópico neste estado do código (issue #10). As imagens comparativas do [README](README.md#layouts-and-appearance) são capturadas das fontes reais no Edge com dados de exemplo, não da saída do OBS.
 
 A prévia usa a primeira pessoa cadastrada e os textos das redes. Sua duração é definida em 300 segundos a cada atualização. O conteúdo de 1920×250 é reduzido visualmente para caber no dock, usando `ResizeObserver`.
 
@@ -281,12 +328,12 @@ Na transmissão real, o acionamento chega pelo evento do OBS, sem depender do if
 
 1. Mantenha todos os arquivos de execução na mesma pasta permanente.
 2. Configure o dock com o endereço de `controller.html`.
-3. Configure as fontes de nomes e redes com seus respectivos arquivos locais e dimensões de 1920×250.
+3. Configure as fontes de nomes, redes e tópico com seus respectivos arquivos locais e dimensões de 1920×250.
 4. Posicione as fontes sobre a câmera na cena. Elas devem permanecer carregadas para receber os comandos; os gráficos ficam transparentes quando ocultos pelo controlador.
 5. Use o servidor WebSocket local na porta configurada no painel. Esta implementação espera autenticação desativada e deve ficar restrita ao ambiente local.
 6. Em **Geral**, escolha idioma, duração e fonte.
 7. Em **Modelos, temas e fundo**, configure aparência, modelo e logo, quando aplicável.
-8. Salve e use os botões das abas de nomes ou redes para mostrar e ocultar o conteúdo.
+8. Salve e use os botões das abas Nomes, Redes ou Tópico para mostrar e ocultar o conteúdo.
 
 Recolher um módulo apenas esconde seus controles, sem remover os campos da página nem perder alterações em edição. O primeiro módulo é Geral; todos começam recolhidos quando não há estado salvo. O botão de salvar permanece acessível durante a rolagem.
 
@@ -333,11 +380,13 @@ git diff --check
 
 O Prettier pode precisar de rede na primeira execução. O projeto não tem `package.json`, lockfile ou scripts npm próprios.
 
-Os testes precisam de Node.js, do pacote `playwright` disponível para `require()` e do Microsoft Edge instalado:
+Os testes precisam de Node.js, do pacote `playwright` disponível para `require()` e do Microsoft Edge instalado. Uma instalação temporária pode ser feita com `npm install --no-save --package-lock=false playwright prettier@3.6.2`. Não há versões fixadas de Playwright nem CI; a melhoria de reprodutibilidade está na issue #5. Execute:
 
 ```powershell
 node test-themes.cjs
 node test-models.cjs
+node test-name-layout.cjs
+node test-topic.cjs
 ```
 
 Se o pacote estiver instalado em uma pasta de ferramentas, configure `NODE_PATH` para essa pasta de `node_modules`. Para usar Google Chrome instalado no lugar do Edge:
@@ -346,12 +395,16 @@ Se o pacote estiver instalado em uma pasta de ferramentas, configure `NODE_PATH`
 $env:TEST_BROWSER = 'chrome'
 node test-themes.cjs
 node test-models.cjs
+node test-name-layout.cjs
+node test-topic.cjs
 ```
 
 | Teste             | Cobertura principal                                                                                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `test-themes.cjs` | Temas, prévia, opacidade, transparência, cores e ícones sociais, imagem de fundo, persistência, importação e compatibilidade    |
 | `test-models.cjs` | Escolha independente de modelos, upload/remoção de logo, salvamento, importação, fallback, posição e eventos de mostrar/ocultar |
+
+`test-name-layout.cjs` cobre nomes longos, fontes, posições e limites; `test-topic.cjs` cobre título, interruptores, persistência, velocidade, duração e saída. `node docs/capture-layouts.cjs` regenera os seis exemplos visuais do README.
 
 Os testes abrem o navegador sem janela e usam configurações isoladas da sessão do OBS. As capturas de tela de verificação são gravadas na pasta temporária do sistema. Eles disparam eventos equivalentes aos recebidos pelos overlays, mas não exercitam uma conexão real com o OBS nem inspecionam a transmissão.
 
@@ -364,20 +417,29 @@ Fluxo recomendado para uma mudança:
 1. Edite os arquivos em `C:\repos\overlay-controller-for-obs`.
 2. Formate e execute as verificações relacionadas à alteração.
 3. Exporte o JSON do dock para manter uma cópia dos dados do operador.
-4. Copie os arquivos necessários para a pasta do OBS, preservando seus arquivos extras.
+4. Copie obrigatoriamente os 11 arquivos de execução para `C:\OBSIgreja\overlay-controller-for-obs`, preservando arquivos extras, e compare os hashes SHA-256 de origem e destino. Essa entrega faz parte da conclusão das alterações de execução conforme `AGENTS.md`.
 5. Recarregue o dock e as fontes e valide na cena.
 6. Revise o diff e faça commit/push quando a alteração estiver pronta.
 7. Para distribuir uma versão, crie uma tag/release vinculada ao commit e um ZIP com todos os arquivos necessários.
 
 As releases publicadas até a preparação deste guia são:
 
-| Release                                                                               | Commit    | Conteúdo                            |
-| ------------------------------------------------------------------------------------- | --------- | ----------------------------------- |
-| [v1.0.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.0.0) | `fbc7816` | Versão inicial                      |
-| [v1.1.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.1.0) | `703ff69` | Temas, fundos e módulos recolhíveis |
-| [v1.2.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.2.0) | `9d4b250` | Modelos independentes e logo        |
+| Release                                                                               | Commit       | Conteúdo                                             |
+| ------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------- |
+| [v1.0.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.0.0) | `fbc7816`    | Versão inicial                                       |
+| [v1.1.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.1.0) | `703ff69`    | Temas, fundos e módulos recolhíveis                  |
+| [v1.2.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.2.0) | `9d4b250`    | Modelos independentes e logo                         |
+| [v1.3.0](https://github.com/thaylorcs/overlay-controller-for-obs/releases/tag/v1.3.0) | tag `v1.3.0` | Tópico, título opcional, nomes longos e documentação |
 
-As notas das releases estão em inglês primeiro e português do Brasil depois. A publicação de releases e a cópia para o OBS foram feitas como operações de manutenção; não há workflow de publicação automática no repositório. O `CHANGELOG.md` ainda reúne as mudanças recentes em `Unreleased`, portanto não está totalmente separado pelas tags publicadas.
+As releases anteriores incluem notas em inglês e português. As novas notas de release são escritas em inglês, conforme a política do projeto. A publicação de releases e a cópia para o OBS foram feitas como operações de manutenção; não há workflow de publicação automática no repositório. O `CHANGELOG.md` separa as releases publicadas. A v1.3.0 contém o ajuste de nomes longos, o tópico e as atualizações de documentação; seu ZIP inclui os 11 arquivos de execução. Releases até v1.2.0 não incluem o tópico. O README contém links para a instalação v1.3.0 e para o ZIP da branch master, que acompanha o desenvolvimento.
+
+### Ambiente observado e limites de compatibilidade
+
+Em 5 de novembro de 2026, o operador relatou uso bem-sucedido dos overlays e o log local identificava OBS Studio **33.0.1 no Windows**. Isso registra o ambiente observado; não estabelece a versão mínima suportada nem comprova todas as combinações de recursos. Os testes automatizados usam Edge/Playwright, sem conexão real ao OBS. Não há uma matriz de compatibilidade para outras versões/plataformas.
+
+### Atualizar e restaurar
+
+Exporte um JSON conhecido antes de substituir arquivos. Substitua todos os arquivos de execução juntos na pasta que o OBS usa, recarregue o dock e as três fontes e acrescente a fonte de tópico ao vir de uma release antiga. Manter o mesmo caminho normalmente preserva o armazenamento local. Se for necessário restaurar ou transferir dados, importe o JSON no dock de destino e confira os campos e a aparência antes de transmitir. A importação substitui a configuração imediatamente; não importa o estado dos módulos nem a indicação no ar.
 
 ## 12. Diagnóstico rápido
 
@@ -393,6 +455,8 @@ As notas das releases estão em inglês primeiro e português do Brasil depois. 
 | Nome cortado                                              | Largura do cartão e tamanho do texto; ative o ajuste automático, que amplia o cartão e reduz a fonte até 32 px; textos maiores ainda podem exigir abreviação |
 | Um espaço vazio entre redes                               | No Clássico a coluna vazia é preservada; a Cápsula redistribui o espaço                                                                                      |
 | Falha ao salvar com imagens                               | Tamanho das imagens e disponibilidade de espaço no armazenamento do navegador                                                                                |
+
+Se o tópico não aparecer, confira se `topic-overlay.html` foi adicionado como fonte própria e se `topic-settings.js` está na mesma pasta. Texto interrompido antes do fim pode indicar timeout curto; botão indicando Ocultar após a saída corresponde à limitação da issue #8.
 
 ## 13. Limites atuais e pontos de evolução
 
