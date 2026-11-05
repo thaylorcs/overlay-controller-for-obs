@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Overlay Controller for OBS - Topic</title>
+    <link rel="stylesheet" href="themes.css" />
+    <script src="themes.js"></script>
+    <script src="topic-settings.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+      }
+      .topic {
+        position: absolute;
+        left: 5%;
+        right: 5%;
+        bottom: 20px;
+        padding: 20px 28px;
+        isolation: isolate;
+        border-radius: var(--theme-radius);
+        color: var(--theme-text);
+        font-family: var(--overlay-font, 'Segoe UI', Arial, sans-serif);
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.1;
+        text-transform: uppercase;
+        text-shadow: var(--topic-shadow);
+        opacity: 0;
+        transition: opacity 0.28s ease;
+      }
+      .topic.show {
+        opacity: 1;
+      }
+      .topic::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background-color: var(--surface-color);
+        background-image: var(--surface-image);
+        background-size: var(--surface-fit);
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: var(--surface-opacity);
+      }
+      .topicHeading {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 10px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .topicHeading[hidden] {
+        display: none;
+      }
+      .viewport {
+        overflow: hidden;
+        border-inline: 4px solid var(--theme-accent);
+        padding: 0 16px;
+      }
+      .track {
+        overflow: hidden;
+        text-align: center;
+      }
+      #text {
+        display: inline-block;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="topic" class="topic">
+      <div id="topicHeading" class="topicHeading" hidden></div>
+      <div class="viewport">
+        <div id="track" class="track"><span id="text"></span></div>
+      </div>
+    </div>
+    <script>
+      const topic = document.getElementById('topic');
+      const track = document.getElementById('track');
+      const text = document.getElementById('text');
+      const heading = document.getElementById('topicHeading');
+      let options = TopicSettings.normalize();
+      let timer = null;
+      let motion = null;
+      let visible = false;
+      function layout() {
+        if (motion) motion.cancel();
+        motion = null;
+        if (!visible || !text.textContent) return;
+        const width = track.clientWidth;
+        const textWidth = text.getBoundingClientRect().width;
+        track.style.textAlign = textWidth > width ? 'left' : 'center';
+        if (width <= 0 || textWidth <= width) return;
+        // A constant pixel speed keeps long and short messages equally readable.
+        motion = text.animate(
+          [{ transform: `translateX(${width}px)` }, { transform: `translateX(${-textWidth}px)` }],
+          {
+            duration: ((width + textWidth) / options.speed) * 1000,
+            iterations: 1,
+            fill: 'forwards',
+            easing: 'linear',
+          },
+        );
+        motion.onfinish = () => hide();
+      }
+      function hide() {
+        clearTimeout(timer);
+        visible = false;
+        topic.classList.remove('show');
+        text.style.visibility = 'hidden';
+        if (motion) motion.cancel();
+        motion = null;
+      }
+      function show(data = {}) {
+        clearTimeout(timer);
+        options = TopicSettings.normalize(data.topicOptions);
+        heading.textContent = options.heading;
+        heading.hidden = !options.headingEnabled || !options.heading;
+        const settings = OverlayThemes.apply(data._settings || {});
+        topic.style.setProperty('--overlay-font', settings.font || '"Segoe UI",Arial,sans-serif');
+        topic.style.setProperty(
+          '--topic-shadow',
+          settings.nameShadow === false ? 'none' : '0 2px 3px #0006',
+        );
+        text.textContent = typeof data.text === 'string' ? data.text.trim() : '';
+        if (!text.textContent) return hide();
+        visible = true;
+        text.style.visibility = '';
+        topic.classList.add('show');
+        layout();
+        document.fonts.ready.then(layout);
+        timer = setTimeout(
+          hide,
+          TopicSettings.seconds(text.textContent, options, settings.duration) * 1000,
+        );
+      }
+      new ResizeObserver(layout).observe(track);
+      document.fonts.addEventListener('loadingdone', layout);
+      window.addEventListener('oocTopicShow', (e) => show(e.detail));
+      window.addEventListener('oocTopicHide', hide);
+    </script>
+  </body>
+</html>

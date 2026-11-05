@@ -120,3 +120,27 @@ Em **Configurações (⚙) > Temas e fundo**, escolha Clássico, Noturno, Minima
 Imagens PNG, JPEG e WebP de até 1 MB ficam salvas localmente e acompanham o backup JSON. **Preencher** ocupa o cartão com recorte; **Conter** mostra a imagem inteira sobre a cor de fundo escolhida. O restante da fonte continua transparente sobre a cena do OBS.
 
 A prévia usa a primeira pessoa cadastrada e os textos das redes, sem precisar de conexão com o OBS. Clique em **Salvar configurações** para aplicar no próximo acionamento. Backups antigos continuam compatíveis. Mantenha os arquivos `themes.js`, `name-layout.js`, `themes.css`, `overlay-models.css`, `theme-editor.js` e `settings-modules.js` junto dos HTMLs e recarregue o dock e as fontes após atualizar.
+
+## Service / talk topic — Tema do culto / palestra
+
+Add `topic-overlay.html` as an additional OBS Browser Source at **1920×250**. In the controller, open **Topic**, enter the message and click **Show topic**. Save keeps the text locally and includes it in JSON backups. Older backups start with an empty topic.
+
+The topic uses the saved font and shared theme. It stays centered when it fits and scrolls left when wider than the available area, recalculating after font loading or resizing. It hides automatically after the configured overlay duration; Hide topic removes it sooner. Saving while on air updates the message and restarts the timeout.
+
+Adicione `topic-overlay.html` como uma fonte de navegador adicional no OBS em **1920×250**. Na aba **Tema**, digite o tema do culto/palestra e clique em **Mostrar tema**. **Salvar** guarda o texto localmente e nos backups JSON. Backups antigos iniciam com tema vazio.
+
+O texto usa a fonte e a aparência salvas. Fica centralizado quando cabe e rola para a esquerda quando ultrapassa a área disponível. Sai automaticamente após a duração configurada dos overlays; **Ocultar tema** permite antecipar a saída. Salvar enquanto está no ar atualiza o texto e reinicia o timeout. Posicione a fonte na cena para exibi-la junto aos demais overlays.
+
+Browser checks: `node test-topic.cjs`.
+
+### Tópico: duração e velocidade
+
+A aba **Tópico** permite ativar **Usar duração própria do tópico**. Desligada, usa a duração geral dos overlays. Ligada, oferece modo manual (3–3600 segundos) ou automático por caracteres. O modo automático estima leitura a 15 caracteres/segundo na velocidade padrão, reserva o deslocamento por uma fonte de 1920 px com estimativa conservadora de 64 px por caractere e adiciona 3 segundos. O resultado é uma estimativa, limitada a uma hora, e aparece no painel antes da exibição.
+
+A velocidade de rolagem é ajustável de 40 a 480 px/s; o novo padrão é 160 px/s (antes, 80). Ela não altera o tempo manual ou geral; no modo automático, o cálculo acompanha a velocidade. Salve ou clique em Mostrar tópico para aplicar. A configuração é incluída nos backups JSON. Mantenha `topic-settings.js` junto aos HTMLs.
+
+The Topic tab supports an optional independent timeout (manual or estimated from character count) and scrolling speed from 40 to 480 px/s, defaulting to 160. With the independent timeout off, the shared overlay duration applies. Automatic timing accounts for character count and speed, with a maximum of one hour. Keep `topic-settings.js` beside the HTML files.
+
+O controle de duração própria do tópico é um interruptor com foco de teclado e identificação acessível. Textos em rolagem fazem apenas uma passagem: quando o último caractere sai pela esquerda, o tópico é ocultado automaticamente. O timeout continua como limite máximo; textos estáticos seguem o tempo configurado. Se o timeout for menor que a passagem, ele encerra a exibição antes.
+
+O tópico inclui um título estático acima da mensagem, inicialmente **Tema da mensagem**. Na aba Tópico, edite **Título acima do tópico** e use **Exibir título da mensagem** para ligar ou desligar essa linha. Salve ou mostre o tópico para aplicar. O título acompanha a fonte e a aparência compartilhadas, é incluído nos backups e desaparece junto com a mensagem. O interruptor desligado preserva o texto para uso futuro. Títulos longos são truncados com reticências para manter a fonte em 1920×250.

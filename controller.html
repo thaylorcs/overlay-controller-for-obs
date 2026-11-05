@@ -452,6 +452,66 @@
         z-index: 5;
         box-shadow: 0 0 0 5px var(--bg);
       }
+      .field .toggleSetting {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        position: relative;
+        min-height: 52px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--text);
+        cursor: pointer;
+      }
+      .toggleSetting input[type='checkbox'] {
+        position: absolute;
+        right: 12px;
+        width: 52px;
+        height: 30px;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .toggleTrack {
+        flex: 0 0 52px;
+        width: 52px;
+        height: 30px;
+        border-radius: 999px;
+        background: var(--line);
+        border: 1px solid var(--muted);
+        pointer-events: none;
+        transition: background 0.18s ease;
+      }
+      .toggleTrack::before {
+        content: '';
+        display: block;
+        width: 22px;
+        height: 22px;
+        margin: 3px;
+        border-radius: 50%;
+        background: var(--text);
+        transition: transform 0.18s ease;
+      }
+      .toggleSetting input:checked + .toggleTrack {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .toggleSetting input:checked + .toggleTrack::before {
+        transform: translateX(22px);
+      }
+      .toggleSetting input:focus-visible + .toggleTrack {
+        outline: 2px solid var(--text);
+        outline-offset: 3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .toggleTrack,
+        .toggleTrack::before {
+          transition: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -466,6 +526,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="names" data-i18n="tabNames"></button
         ><button class="tab" data-tab="social" data-i18n="tabSocial"></button
+        ><button class="tab" data-tab="topic" data-i18n="tabTopic"></button
         ><button class="tab" data-tab="settings" title="Settings">⚙</button>
       </div>
       <div id="names" class="view active">
@@ -508,6 +569,54 @@
             <button id="saveSocial" class="save" data-i18n="save"></button
             ><button id="cancelSocial" data-i18n="cancel"></button>
           </div>
+        </div>
+      </div>
+      <div id="topic" class="view">
+        <div class="toolbar"><span data-i18n="topicTitle"></span></div>
+        <div class="field">
+          <label for="topicText" data-i18n="topicTitle"></label>
+          <input id="topicText" />
+        </div>
+        <div class="field">
+          <label class="toggleSetting" for="topicHeadingEnabled">
+            <span data-i18n="topicHeadingEnabled"></span>
+            <input id="topicHeadingEnabled" type="checkbox" role="switch" />
+            <span class="toggleTrack" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="topicHeading" data-i18n="topicHeading"></label>
+          <input id="topicHeading" />
+        </div>
+        <p class="hint" data-i18n="topicHint"></p>
+        <div class="field">
+          <label class="toggleSetting" for="topicCustomDuration">
+            <span data-i18n="topicCustomDuration"></span>
+            <input id="topicCustomDuration" type="checkbox" role="switch" />
+            <span class="toggleTrack" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div id="topicTimingOptions">
+          <div class="field">
+            <label for="topicTimingMode" data-i18n="topicTimingMode"></label
+            ><select id="topicTimingMode">
+              <option value="auto" data-i18n="topicAutomatic"></option>
+              <option value="manual" data-i18n="topicManual"></option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="topicDuration" data-i18n="topicDuration"></label
+            ><input id="topicDuration" type="number" min="3" max="3600" value="30" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="topicSpeed" data-i18n="topicSpeed"></label
+          ><input id="topicSpeed" type="range" min="40" max="480" step="10" value="160" />
+        </div>
+        <p id="topicTimingSummary" class="hint" aria-live="polite"></p>
+        <div class="editorActions">
+          <button id="saveTopic" class="save" data-i18n="save"></button>
+          <button id="topicTrigger" data-i18n="showTopic"></button>
         </div>
       </div>
       <div id="settings" class="view">
@@ -619,11 +728,29 @@
       <div id="status" class="status"></div>
     </div>
     <script src="themes.js"></script>
+    <script src="topic-settings.js"></script>
     <script>
       const $ = (id) => document.getElementById(id);
       const KEY = 'overlay-controller-for-obs-v1';
       const I18N = {
         en: {
+          tabTopic: 'Topic',
+          topicTitle: 'SERVICE / TALK TOPIC',
+          topicHint:
+            'Uses the saved font and theme. Long text scrolls left. Hides automatically after the configured duration. Add topic-overlay.html in OBS (1920×250).',
+          showTopic: 'SHOW TOPIC',
+          hideTopic: 'HIDE TOPIC',
+          topicHeadingEnabled: 'SHOW MESSAGE HEADING',
+          topicHeading: 'MESSAGE HEADING',
+          topicCustomDuration: 'USE TOPIC DURATION',
+          topicTimingMode: 'DURATION MODE',
+          topicAutomatic: 'Automatic (character count)',
+          topicManual: 'Manual',
+          topicDuration: 'DURATION (SECONDS)',
+          topicSpeed: 'SCROLL SPEED (PX/SECOND)',
+          topicTimingSummary: 'Duration: {seconds}s · Speed: {speed}px/s',
+          topicSaved: 'Topic saved.',
+          enterTopic: 'Enter the topic.',
           tabNames: 'Names',
           tabSocial: 'Social',
           people: 'People',
@@ -676,6 +803,23 @@
           invalidJson: 'Invalid JSON.',
         },
         'pt-BR': {
+          tabTopic: 'Tópico',
+          topicTitle: 'TÓPICO DO CULTO / PALESTRA',
+          topicHint:
+            'Usa a fonte e o tema salvos. Textos longos rolam para a esquerda. Sai automaticamente após a duração configurada. Adicione topic-overlay.html no OBS (1920×250).',
+          showTopic: 'MOSTRAR TÓPICO',
+          hideTopic: 'OCULTAR TÓPICO',
+          topicHeadingEnabled: 'EXIBIR TÍTULO DA MENSAGEM',
+          topicHeading: 'TÍTULO ACIMA DO TÓPICO',
+          topicCustomDuration: 'USAR DURAÇÃO PRÓPRIA DO TÓPICO',
+          topicTimingMode: 'MODO DE DURAÇÃO',
+          topicAutomatic: 'Automático (quantidade de caracteres)',
+          topicManual: 'Manual',
+          topicDuration: 'DURAÇÃO (SEGUNDOS)',
+          topicSpeed: 'VELOCIDADE DE ROLAGEM (PX/SEGUNDO)',
+          topicTimingSummary: 'Duração: {seconds}s · Velocidade: {speed}px/s',
+          topicSaved: 'Tópico salvo.',
+          enterTopic: 'Informe o tópico.',
           tabNames: 'Nomes',
           tabSocial: 'Redes',
           people: 'Pessoas',
@@ -729,6 +873,8 @@
         },
       };
       const DEFAULT = {
+        topic: '',
+        topicOptions: TopicSettings.normalize(),
         version: '1.0.0',
         language: 'en',
         people: [{ name: 'Example', role: 'Presenter', instagram: 'example' }],
@@ -761,6 +907,8 @@
           theme: OverlayThemes.normalize(Object.assign(clone(DEFAULT.theme), v?.theme || {})),
           ws: Object.assign(clone(DEFAULT.ws), v?.ws || {}),
         });
+        out.topicOptions = TopicSettings.normalize(v?.topicOptions);
+        out.topic = typeof v?.topic === 'string' ? v.topic : '';
         out.people = (v?.people || DEFAULT.people).map(normalizePerson);
         return out;
       }
@@ -778,6 +926,8 @@
         seq = 0,
         onAir = -1,
         socialOn = false,
+        topicOn = false,
+        topicFallback = null,
         editing = -1,
         retry = null,
         nameFallback = null,
@@ -799,6 +949,8 @@
           .forEach((el) => (el.textContent = t(el.dataset.i18n)));
         if (ready) $('connText').textContent = t('ready');
         renderSocial();
+        $('topicTrigger').textContent = t(topicOn ? 'hideTopic' : 'showTopic');
+        updateTopicControls();
       }
       function persist() {
         localStorage.setItem(KEY, JSON.stringify(cfg));
@@ -1007,6 +1159,79 @@
         $('editor').classList.remove('open');
         finishName();
       };
+      function readTopicOptions() {
+        return TopicSettings.normalize({
+          headingEnabled: $('topicHeadingEnabled').checked,
+          heading: $('topicHeading').value,
+          customDuration: $('topicCustomDuration').checked,
+          automatic: $('topicTimingMode').value === 'auto',
+          duration: $('topicDuration').value,
+          speed: $('topicSpeed').value,
+        });
+      }
+      function updateTopicControls() {
+        const options = readTopicOptions();
+        $('topicHeading').disabled = !options.headingEnabled;
+        $('topicTimingOptions').hidden = !options.customDuration;
+        $('topicDuration').disabled = options.automatic || !options.customDuration;
+        $('topicTimingSummary').textContent = t('topicTimingSummary')
+          .replace(
+            '{seconds}',
+            TopicSettings.seconds($('topicText').value, options, cfg.theme.duration),
+          )
+          .replace('{speed}', options.speed);
+      }
+      [
+        'topicText',
+        'topicHeadingEnabled',
+        'topicHeading',
+        'topicCustomDuration',
+        'topicTimingMode',
+        'topicDuration',
+        'topicSpeed',
+      ].forEach((id) => {
+        $(id).addEventListener('input', updateTopicControls);
+      });
+      function finishTopic() {
+        clearTimeout(topicFallback);
+        topicOn = false;
+        $('topicTrigger').textContent = t('showTopic');
+      }
+      function scheduleTopicExit() {
+        clearTimeout(topicFallback);
+        topicFallback = setTimeout(
+          finishTopic,
+          TopicSettings.seconds(cfg.topic, cfg.topicOptions, cfg.theme.duration) * 1000,
+        );
+      }
+      function saveTopic() {
+        cfg.topic = $('topicText').value.trim();
+        cfg.topicOptions = readTopicOptions();
+        persist();
+        if (topicOn) {
+          emit('oocTopicShow', payload({ text: cfg.topic, topicOptions: cfg.topicOptions }));
+          if (!cfg.topic) finishTopic();
+          else scheduleTopicExit();
+        }
+      }
+      $('saveTopic').onclick = () => {
+        saveTopic();
+        status(t('topicSaved'));
+      };
+      $('topicTrigger').onclick = () => {
+        if (!ready) return status(t('obsNotConnected'), true);
+        if (topicOn) {
+          emit('oocTopicHide');
+          finishTopic();
+        } else {
+          if (!$('topicText').value.trim()) return status(t('enterTopic'), true);
+          saveTopic();
+          emit('oocTopicShow', payload({ text: cfg.topic, topicOptions: cfg.topicOptions }));
+          topicOn = true;
+          scheduleTopicExit();
+        }
+        $('topicTrigger').textContent = t(topicOn ? 'hideTopic' : 'showTopic');
+      };
       $('socialTrigger').onclick = toggleSocial;
       $('socialEdit').onclick = () => {
         $('socialEditor').classList.add('open');
@@ -1027,6 +1252,14 @@
         status(t('socialSaved'));
       };
       function fillSettings() {
+        $('topicText').value = cfg.topic;
+        $('topicHeadingEnabled').checked = cfg.topicOptions.headingEnabled;
+        $('topicHeading').value = cfg.topicOptions.heading;
+        $('topicCustomDuration').checked = cfg.topicOptions.customDuration;
+        $('topicTimingMode').value = cfg.topicOptions.automatic ? 'auto' : 'manual';
+        $('topicDuration').value = cfg.topicOptions.duration;
+        $('topicSpeed').value = cfg.topicOptions.speed;
+        updateTopicControls();
         $('language').value = cfg.language || 'auto';
         $('duration').value = cfg.theme.duration;
         $('font').value = cfg.theme.font;
