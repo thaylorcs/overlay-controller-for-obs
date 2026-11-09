@@ -50,3 +50,9 @@
 
 - Record new durable guidance here when the user requests it.
 - Keep this file consistent with the project and current user instructions; do not turn one-off choices into permanent rules without context.
+
+## Finalizing work
+
+- When the user asks to finalize work, review the full diff and group related code and documentation into thematic commits with English messages.
+- Run the applicable checks and verify the OBS test delivery before committing. Stage only intended files and remove temporary development installations after the final checks.
+- Push the finalized commits to the configured upstream and verify that the local branch and upstream point to the same commit. Report the commits and the push result.
