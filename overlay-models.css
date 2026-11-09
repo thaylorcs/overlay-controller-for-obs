@@ -174,7 +174,6 @@ html[data-social-model='capsule'] .content {
 html[data-social-model='capsule'] .platform {
   font-size: 14px;
   letter-spacing: 1px;
-  text-transform: uppercase;
 }
 html[data-social-model='capsule'] .label {
   font-size: 24px;

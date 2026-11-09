@@ -91,6 +91,8 @@ Background images and the Identity logo accept local PNG, JPEG or WebP files up 
 
 These are screenshots of the actual browser sources with sample data, a neutral illustrative background, and a common wine color scheme; they are not captures of an OBS broadcast. The layout and color theme are separate choices.
 
+Both social layouts label the networks **YouTube**, **Facebook**, and **Instagram**. Account names keep the capitalization you entered.
+
 Classic names default to **Presenter style > Match lower card (default)**: both panels share width, surface, colors and decoration. **Custom** enables an independent opaque name background/text color. Sidebar and Identity use one shared surface.
 
 The editor's live preview works without OBS and shows the first saved person and saved social labels. **There is no Topic preview yet.** Save settings and trigger again to check the real source. A working preview does not confirm the OBS source path, visibility or connection.
@@ -208,6 +210,8 @@ Em **Configurações > Modelos, temas e fundo**, selecione o modelo independente
 - **Identidade com logo:** um painel com logo ou símbolo decorativo ao lado dos textos.
 - **Redes — Clássico:** três cartões; redes vazias preservam suas colunas.
 - **Redes — Cápsula:** faixas arredondadas; redes vazias saem e o espaço é redistribuído.
+
+Nos dois modelos de redes, os rótulos são **YouTube**, **Facebook** e **Instagram**. Os nomes de usuário mantêm as maiúsculas e minúsculas digitadas.
 
 Novas instalações usam Clássico; atualizações preservam os modelos salvos. Temas de cores: **Clássico, Noturno, Minimalista e Claro**. Personalize fonte, cores, detalhes, fundo, opacidade e cantos. A opacidade afeta o fundo, sem apagar os textos; o brilho depende do layout. Faixa lateral e Identidade usam uma superfície única.
 
