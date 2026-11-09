@@ -53,6 +53,8 @@ No Node.js, Python, Playwright or npm installation is needed to run the overlays
 
 English is the default interface language. Select Brazilian Portuguese in **Settings > General > Language**. Settings modules can be expanded or collapsed without discarding edits; their open state is remembered locally.
 
+In **Names**, click the pencil beside a presenter to open the editor directly below that person. The **+** button opens a blank editor above the list.
+
 | Action                                               | What is saved or applied                                                                                                    |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Save a person or social editor                       | Saves that editor's values to local browser storage                                                                         |
@@ -168,6 +170,8 @@ Mantenha juntos os **11 arquivos** da lista de execução na seção inglesa. Is
 ### Operação, salvamento e backup
 
 Escolha português em **Configurações > Geral > Idioma**. Recolher módulos não perde edições e o dock lembra quais estavam abertos.
+
+Em **Nomes**, clique no lápis ao lado de um apresentador para abrir o formulário logo abaixo dele. O botão **+** abre um formulário em branco acima da lista.
 
 | Ação                                              | Comportamento                                                                                                          |
 | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |

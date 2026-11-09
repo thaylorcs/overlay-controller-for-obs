@@ -533,7 +533,6 @@
         <div class="toolbar">
           <span data-i18n="people"></span><button id="add" class="iconbtn">＋</button>
         </div>
-        <div id="list" class="list"></div>
         <div id="editor" class="editor">
           <div class="field"><label data-i18n="name"></label><input id="personName" /></div>
           <div class="field"><label data-i18n="role"></label><input id="personRole" /></div>
@@ -546,6 +545,7 @@
             ><button id="delete" data-i18n="delete"></button>
           </div>
         </div>
+        <div id="list" class="list"></div>
       </div>
       <div id="social" class="view">
         <div class="toolbar"><span data-i18n="socialNetworks"></span></div>
@@ -986,8 +986,8 @@
         list.innerHTML = '';
         cfg.people.forEach((p, i) => {
           const r = document.createElement('div');
-          r.className = 'row' + (onAir === i ? ' onair' : '');
-          r.innerHTML = `<button class="trigger">${onAir === i ? '■' : '▶'}</button><div class="meta"><div class="name"></div><div class="sub"></div></div><button class="edit">✎</button>`;
+          r.className = 'row';
+          r.innerHTML = `<button class="trigger"></button><div class="meta"><div class="name"></div><div class="sub"></div></div><button class="edit">✎</button>`;
           r.querySelector('.name').textContent = p.name;
           r.querySelector('.sub').textContent = [
             p.role,
@@ -997,15 +997,25 @@
             .join(' · ');
           r.querySelector('.trigger').onclick = () => toggleName(i);
           r.querySelector('.meta').onclick = () => toggleName(i);
-          r.querySelector('.edit').onclick = () => openEditor(i);
+          r.querySelector('.edit').onclick = () => openEditor(i, r);
           list.appendChild(r);
         });
+        renderNameStatus();
         renderSocial();
+      }
+      function renderNameStatus() {
+        $('list')
+          .querySelectorAll('.row')
+          .forEach((row, i) => {
+            const active = onAir === i;
+            row.classList.toggle('onair', active);
+            row.querySelector('.trigger').textContent = active ? '■' : '▶';
+          });
       }
       function finishName() {
         clearTimeout(nameFallback);
         onAir = -1;
-        render();
+        renderNameStatus();
         status(t('ready') + '.');
       }
       function finishSocial() {
@@ -1023,7 +1033,7 @@
         }
         emit('oocLowerThirdShow', payload(cfg.people[i]));
         onAir = i;
-        render();
+        renderNameStatus();
         status(`${cfg.people[i].name} ${t('onAir')}`);
         clearTimeout(nameFallback);
         nameFallback = setTimeout(finishName, cfg.theme.duration * 1000 + 1200);
@@ -1128,17 +1138,28 @@
         retryAttempt = 0;
         connect(true);
       }
-      function openEditor(i) {
+      function openEditor(i, row) {
         editing = i;
-        $('editor').classList.add('open');
+        const editor = $('editor');
+        if (row) row.after(editor);
+        else $('list').before(editor);
+        editor.classList.add('open');
         const p = i >= 0 ? cfg.people[i] : { name: '', role: '', instagram: '' };
         $('personName').value = p.name;
         $('personRole').value = p.role;
         $('instagramPessoa').value = p.instagram;
         $('delete').style.display = i >= 0 ? 'block' : 'none';
+        $('personName').focus({ preventScroll: true });
+        editor.scrollIntoView({ block: 'nearest' });
+      }
+      function closeEditor() {
+        editing = -1;
+        const editor = $('editor');
+        editor.classList.remove('open');
+        $('list').before(editor);
       }
       $('add').onclick = () => openEditor(-1);
-      $('cancel').onclick = () => $('editor').classList.remove('open');
+      $('cancel').onclick = closeEditor;
       $('save').onclick = () => {
         const p = {
           name: $('personName').value.trim(),
@@ -1149,15 +1170,16 @@
         if (editing >= 0) cfg.people[editing] = p;
         else cfg.people.push(p);
         persist();
-        $('editor').classList.remove('open');
+        closeEditor();
         render();
       };
       $('delete').onclick = () => {
         if (editing < 0) return;
         cfg.people.splice(editing, 1);
         persist();
-        $('editor').classList.remove('open');
+        closeEditor();
         finishName();
+        render();
       };
       function readTopicOptions() {
         return TopicSettings.normalize({
@@ -1324,6 +1346,7 @@
           const x = JSON.parse(await f.text());
           if (!x.people || !x.social || !x.theme) throw 0;
           cfg = normalizeConfig(x);
+          closeEditor();
           persist();
           fillSettings();
           applyI18n();

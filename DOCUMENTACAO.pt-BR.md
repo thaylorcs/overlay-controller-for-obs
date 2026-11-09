@@ -300,6 +300,8 @@ A primeira chave contém a configuração principal; a segunda contém o estado 
 
 Abrir o controlador no Edge e abri-lo no dock do OBS não implica compartilhar configurações. O armazenamento pertence ao ambiente do navegador; a pasta do projeto não contém um arquivo automático com o cadastro do operador. Para transportar os dados, use exportação e importação JSON.
 
+Na aba **Nomes**, o lápis abre o formulário logo abaixo do apresentador escolhido. O botão **+** abre um formulário em branco acima da lista.
+
 Pessoas e redes são persistidas ao salvar seus respectivos editores. Na aba Tópico, tanto Salvar como Mostrar tópico gravam mensagem, título, interruptores, duração e velocidade. Salvar enquanto está no ar envia uma nova exibição e reinicia o timeout. Exportar inclui somente dados já salvos, não as edições pendentes nos formulários. Importar aplica e grava imediatamente, atualiza os campos e reconecta; não exige outro clique em Salvar. O idioma é persistido ao ser alterado. As opções visuais são exibidas na prévia durante a edição, mas dependem de **Salvar configurações** para serem usadas nos próximos acionamentos do OBS.
 
 ### Imagens e compatibilidade
