@@ -115,14 +115,18 @@
             easing: 'linear',
           },
         );
-        motion.onfinish = () => hide();
+        motion.onfinish = () => hide(true);
       }
-      function hide() {
+      function hide(scrolledOff = false) {
         clearTimeout(timer);
+        if (!visible) return;
         visible = false;
         topic.classList.remove('show');
-        text.style.visibility = 'hidden';
-        if (motion) motion.cancel();
+        if (scrolledOff) text.style.visibility = 'hidden';
+        if (motion) {
+          text.style.transform = getComputedStyle(text).transform;
+          motion.cancel();
+        }
         motion = null;
       }
       function show(data = {}) {
@@ -140,6 +144,7 @@
         if (!text.textContent) return hide();
         visible = true;
         text.style.visibility = '';
+        text.style.transform = '';
         topic.classList.add('show');
         layout();
         document.fonts.ready.then(layout);
@@ -151,7 +156,7 @@
       new ResizeObserver(layout).observe(track);
       document.fonts.addEventListener('loadingdone', layout);
       window.addEventListener('oocTopicShow', (e) => show(e.detail));
-      window.addEventListener('oocTopicHide', hide);
+      window.addEventListener('oocTopicHide', () => hide());
     </script>
   </body>
 </html>

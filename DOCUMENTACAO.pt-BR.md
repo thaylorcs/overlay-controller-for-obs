@@ -93,7 +93,11 @@ O endereço padrão é `ws://127.0.0.1:4455`, usando o subprotocolo `obswebsocke
 
 Após uma desconexão, as tentativas usam intervalos progressivos: 2, 4, 8, 16 e até 30 segundos. `connectGeneration` impede que callbacks de conexões antigas alterem a sessão atual.
 
-A indicação “no ar” no painel é local. Ela é atualizada por cliques e temporizadores, com margens de 1,2 segundo para nomes e 1,8 segundo para redes. Não é uma confirmação de que o gráfico está visível na saída final do OBS. O tópico usa um temporizador local próprio no painel: se a passagem terminar antes, o botão pode continuar indicando Ocultar tópico até esse prazo. O primeiro clique nesse intervalo apenas limpa o estado; a correção está na [issue #8](https://github.com/thaylorcs/overlay-controller-for-obs/issues/8).
+A indicação “no ar” no painel usa os cliques e temporizadores locais do dock. Se o texto do tópico terminar de rolar antes do prazo, o botão pode continuar indicando Ocultar tópico até o prazo configurado.
+
+Ao trocar entre nomes, redes e tópico, o dock pede a saída do overlay atual, aguarda a duração da animação e reserva mais meio segundo antes de acionar o próximo. Cliques durante a espera substituem a seleção pendente. A contagem regressiva permanece no topo durante a rolagem e começa quando o dock aciona a exibição.
+
+A cor inicial do timer é âmbar (`#FFCE68`). Para alterá-la, use **Configurações > Modelos, temas e fundo > Cor do timer** e salve. A escolha é incluída nos backups e independe do tema predefinido dos overlays. Os avisos do dock aparecem acima das abas.
 
 ## 4. Mapa de todos os arquivos
 

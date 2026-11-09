@@ -55,6 +55,12 @@ English is the default interface language. Select Brazilian Portuguese in **Sett
 
 In **Names**, click the pencil beside a presenter to open the editor directly below that person. The **+** button opens a blank editor above the list.
 
+The dock displays one overlay type at a time. When you switch between names, social networks, and the topic, the outgoing overlay plays its exit animation, followed by at least half a second before the next overlay starts. If you click several items during the transition, the last selection wins.
+
+The countdown stays at the top of the dock as you scroll. It starts when the dock shows the overlay and uses its configured display time. Names and social networks use the shared duration. The topic uses its effective shared, automatic, or manual duration. If a scrolling topic finishes early, the countdown still follows the configured time.
+
+The countdown defaults to amber (`#FFCE68`). Choose **Countdown color** under **Settings > Models, themes & background**, then click **Save settings**. The color is included in backups and is preserved when changing the appearance preset.
+
 | Action                                               | What is saved or applied                                                                                                    |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Save a person or social editor                       | Saves that editor's values to local browser storage                                                                         |
@@ -172,6 +178,12 @@ Mantenha juntos os **11 arquivos** da lista de execução na seção inglesa. Is
 Escolha português em **Configurações > Geral > Idioma**. Recolher módulos não perde edições e o dock lembra quais estavam abertos.
 
 Em **Nomes**, clique no lápis ao lado de um apresentador para abrir o formulário logo abaixo dele. O botão **+** abre um formulário em branco acima da lista.
+
+O dock exibe um tipo de overlay por vez. Ao alternar entre nomes, redes e tópico, o overlay atual faz a animação de saída e o próximo entra depois de uma pausa de pelo menos meio segundo. Se houver vários cliques durante a transição, vale a última seleção.
+
+O contador fica no topo do dock durante a rolagem e começa quando o dock aciona a exibição. Nomes e redes usam a duração geral. O tópico usa a duração geral, automática ou manual, conforme a configuração. Se o texto do tópico terminar de rolar antes, o contador continua seguindo o tempo configurado.
+
+O timer usa âmbar (`#FFCE68`) por padrão. Escolha **Cor do timer** em **Configurações > Modelos, temas e fundo** e clique em **Salvar configurações**. A cor entra no backup e é mantida ao trocar o tema predefinido.
 
 | Ação                                              | Comportamento                                                                                                          |
 | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |

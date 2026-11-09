@@ -74,6 +74,37 @@
       .head strong {
         font-size: 13px;
       }
+      .countdown:not([hidden]) {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 5px 10px;
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--countdown-color);
+        border-radius: 5px;
+        background: var(--panel);
+        background: color-mix(in srgb, var(--countdown-color) 11%, var(--panel));
+      }
+      .countdownLabel {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #countdownTime {
+        flex: none;
+        font-size: 24px;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 0 10px color-mix(in srgb, var(--countdown-color) 45%, transparent);
+      }
+      #countdownTime,
+      .countdownLabel strong {
+        color: var(--countdown-color);
+      }
       .conn {
         display: flex;
         align-items: center;
@@ -202,8 +233,7 @@
         font-size: 15px;
       }
       .status {
-        margin-top: 8px;
-        min-height: 16px;
+        margin: 4px 0;
         color: var(--muted);
         font-size: 11px;
       }
@@ -523,6 +553,14 @@
         >
         <div class="conn"><span id="dot" class="dot"></span><span id="connText"></span></div>
       </div>
+      <div id="countdown" class="countdown" hidden>
+        <span class="countdownLabel">
+          <strong>● <span data-i18n="countdownOnAir"></span></strong> ·
+          <span id="countdownLabel"></span>
+        </span>
+        <strong id="countdownTime" role="timer"></strong>
+      </div>
+      <div id="status" class="status" role="status" hidden></div>
       <div class="tabs">
         <button class="tab active" data-tab="names" data-i18n="tabNames"></button
         ><button class="tab" data-tab="social" data-i18n="tabSocial"></button
@@ -725,7 +763,6 @@
         </div>
         <button id="saveSettings" class="widebtn primary" data-i18n="saveSettings"></button>
       </div>
-      <div id="status" class="status"></div>
     </div>
     <script src="themes.js"></script>
     <script src="topic-settings.js"></script>
@@ -794,8 +831,7 @@
             'Disable WebSocket authentication for this local-only setup, or configure a compatible authenticated client.',
           obsRejected: 'OBS rejected the command.',
           obsNotConnected: 'OBS is not connected.',
-          onAir: 'on air.',
-          socialOnAir: 'Social networks on air.',
+          countdownOnAir: 'On air',
           saved: 'Settings saved.',
           socialSaved: 'Social networks saved.',
           enterName: 'Enter a name.',
@@ -863,8 +899,7 @@
             'Desative a autenticação do WebSocket para esta configuração apenas local, ou configure um cliente autenticado compatível.',
           obsRejected: 'OBS recusou o comando.',
           obsNotConnected: 'OBS não conectado.',
-          onAir: 'no ar.',
-          socialOnAir: 'Redes sociais no ar.',
+          countdownOnAir: 'No ar',
           saved: 'Configurações salvas.',
           socialSaved: 'Redes sociais salvas.',
           enterName: 'Informe o nome.',
@@ -951,14 +986,48 @@
         renderSocial();
         $('topicTrigger').textContent = t(topicOn ? 'hideTopic' : 'showTopic');
         updateTopicControls();
+        updateCountdown();
+      }
+      const countdowns = new Map();
+      let countdownTick;
+      function startCountdown(kind, label, seconds) {
+        countdowns.delete(kind);
+        countdowns.set(kind, { label, endsAt: performance.now() + seconds * 1000 });
+        countdownTick ??= setInterval(updateCountdown, 200);
+        updateCountdown();
+      }
+      function stopCountdown(kind) {
+        countdowns.delete(kind);
+        updateCountdown();
+      }
+      function updateCountdown() {
+        const now = performance.now();
+        for (const [kind, entry] of countdowns) {
+          if (entry.endsAt <= now) countdowns.delete(kind);
+        }
+        const active = Array.from(countdowns.values()).pop();
+        $('countdown').hidden = !active;
+        if (!active) {
+          clearInterval(countdownTick);
+          countdownTick = undefined;
+          return;
+        }
+        const seconds = Math.ceil((active.endsAt - now) / 1000);
+        const time = [Math.floor(seconds / 60), seconds % 60]
+          .map((part) => String(part).padStart(2, '0'))
+          .join(':');
+        $('countdownLabel').textContent = active.label();
+        if ($('countdownTime').textContent !== time) $('countdownTime').textContent = time;
       }
       function persist() {
         localStorage.setItem(KEY, JSON.stringify(cfg));
         document.documentElement.style.setProperty('--accent', cfg.theme.primary);
+        document.documentElement.style.setProperty('--countdown-color', cfg.theme.countdownColor);
       }
       function status(x, err = false) {
         $('status').textContent = x;
         $('status').classList.toggle('err', err);
+        $('status').hidden = !x;
       }
       function conn(state, text) {
         ready = state;
@@ -1012,31 +1081,66 @@
             row.querySelector('.trigger').textContent = active ? '■' : '▶';
           });
       }
+      const overlayExits = {
+        // Allow for each source's longest CSS transition, stagger, and render frames.
+        name: { event: 'oocLowerThirdHide', animationMs: 700, finish: finishName },
+        social: { event: 'oocSocialHide', animationMs: 1020, finish: finishSocial },
+        topic: { event: 'oocTopicHide', animationMs: 340, finish: finishTopic },
+      };
+      const overlayGapMs = 500;
+      let nextOverlayAt = 0;
+      let pendingOverlay;
+      function activeOverlay() {
+        if (onAir >= 0) return 'name';
+        if (socialOn) return 'social';
+        if (topicOn) return 'topic';
+      }
+      function hideOverlay(kind) {
+        const exit = overlayExits[kind];
+        emit(exit.event);
+        nextOverlayAt = performance.now() + exit.animationMs + overlayGapMs;
+        exit.finish();
+      }
+      function requestOverlay(kind, show) {
+        clearTimeout(pendingOverlay);
+        const active = activeOverlay();
+        if (active && active !== kind) hideOverlay(active);
+        const start = () => {
+          if (!ready) return status(t('obsNotConnected'), true);
+          show();
+        };
+        const wait = Math.ceil(nextOverlayAt - performance.now());
+        if (wait > 0) pendingOverlay = setTimeout(start, wait);
+        else start();
+      }
       function finishName() {
         clearTimeout(nameFallback);
+        stopCountdown('name');
         onAir = -1;
         renderNameStatus();
-        status(t('ready') + '.');
       }
       function finishSocial() {
         clearTimeout(socialFallback);
+        stopCountdown('social');
         socialOn = false;
         renderSocial();
-        status(t('ready') + '.');
       }
       function toggleName(i) {
         if (!ready) return status(t('obsNotConnected'), true);
-        if (onAir === i) {
-          emit('oocLowerThirdHide');
-          finishName();
-          return;
-        }
-        emit('oocLowerThirdShow', payload(cfg.people[i]));
-        onAir = i;
+        if (onAir === i) return hideOverlay('name');
+        const person = cfg.people[i];
+        requestOverlay('name', () => showName(person));
+      }
+      function showName(person) {
+        const index = cfg.people.indexOf(person);
+        if (index < 0) return;
+        emit('oocLowerThirdShow', payload(person));
+        startCountdown('name', () => person.name, cfg.theme.duration);
+        onAir = index;
         renderNameStatus();
-        status(`${cfg.people[i].name} ${t('onAir')}`);
+        status('');
         clearTimeout(nameFallback);
-        nameFallback = setTimeout(finishName, cfg.theme.duration * 1000 + 1200);
+        nameFallback = setTimeout(() => hideOverlay('name'), cfg.theme.duration * 1000);
       }
       function renderSocial() {
         $('socialCard').classList.toggle('onair', socialOn);
@@ -1049,17 +1153,17 @@
       }
       function toggleSocial() {
         if (!ready) return status(t('obsNotConnected'), true);
-        if (socialOn) {
-          emit('oocSocialHide');
-          finishSocial();
-          return;
-        }
+        if (socialOn) return hideOverlay('social');
+        requestOverlay('social', showSocial);
+      }
+      function showSocial() {
         emit('oocSocialShow', payload(cfg.social));
+        startCountdown('social', () => t('socialNetworks'), cfg.theme.duration);
         socialOn = true;
         renderSocial();
-        status(t('socialOnAir'));
+        status('');
         clearTimeout(socialFallback);
-        socialFallback = setTimeout(finishSocial, cfg.theme.duration * 1000 + 1800);
+        socialFallback = setTimeout(() => hideOverlay('social'), cfg.theme.duration * 1000);
       }
       function schedule(gen) {
         if (gen !== connectGeneration || manualClose || ready) return;
@@ -1108,7 +1212,7 @@
           } else if (m.op === 2) {
             retryAttempt = 0;
             conn(true, t('ready'));
-            status(t('ready') + '.');
+            status('');
           } else if (m.op === 7 && !m.d.requestStatus.result) status(t('obsRejected'), true);
         };
         socket.onclose = () => {
@@ -1175,10 +1279,11 @@
       };
       $('delete').onclick = () => {
         if (editing < 0) return;
+        if (onAir === editing) hideOverlay('name');
+        else if (onAir > editing) onAir--;
         cfg.people.splice(editing, 1);
         persist();
         closeEditor();
-        finishName();
         render();
       };
       function readTopicOptions() {
@@ -1216,24 +1321,31 @@
       });
       function finishTopic() {
         clearTimeout(topicFallback);
+        stopCountdown('topic');
         topicOn = false;
         $('topicTrigger').textContent = t('showTopic');
       }
       function scheduleTopicExit() {
         clearTimeout(topicFallback);
-        topicFallback = setTimeout(
-          finishTopic,
-          TopicSettings.seconds(cfg.topic, cfg.topicOptions, cfg.theme.duration) * 1000,
-        );
+        const seconds = TopicSettings.seconds(cfg.topic, cfg.topicOptions, cfg.theme.duration);
+        const topic = cfg.topic;
+        startCountdown('topic', () => topic, seconds);
+        topicFallback = setTimeout(() => hideOverlay('topic'), seconds * 1000);
+      }
+      function showTopic() {
+        if (!cfg.topic) return;
+        emit('oocTopicShow', payload({ text: cfg.topic, topicOptions: cfg.topicOptions }));
+        topicOn = true;
+        $('topicTrigger').textContent = t('hideTopic');
+        scheduleTopicExit();
       }
       function saveTopic() {
         cfg.topic = $('topicText').value.trim();
         cfg.topicOptions = readTopicOptions();
         persist();
         if (topicOn) {
-          emit('oocTopicShow', payload({ text: cfg.topic, topicOptions: cfg.topicOptions }));
-          if (!cfg.topic) finishTopic();
-          else scheduleTopicExit();
+          if (cfg.topic) showTopic();
+          else hideOverlay('topic');
         }
       }
       $('saveTopic').onclick = () => {
@@ -1242,17 +1354,10 @@
       };
       $('topicTrigger').onclick = () => {
         if (!ready) return status(t('obsNotConnected'), true);
-        if (topicOn) {
-          emit('oocTopicHide');
-          finishTopic();
-        } else {
-          if (!$('topicText').value.trim()) return status(t('enterTopic'), true);
-          saveTopic();
-          emit('oocTopicShow', payload({ text: cfg.topic, topicOptions: cfg.topicOptions }));
-          topicOn = true;
-          scheduleTopicExit();
-        }
-        $('topicTrigger').textContent = t(topicOn ? 'hideTopic' : 'showTopic');
+        if (topicOn) return hideOverlay('topic');
+        if (!$('topicText').value.trim()) return status(t('enterTopic'), true);
+        saveTopic();
+        requestOverlay('topic', showTopic);
       };
       $('socialTrigger').onclick = toggleSocial;
       $('socialEdit').onclick = () => {
@@ -1345,7 +1450,11 @@
         try {
           const x = JSON.parse(await f.text());
           if (!x.people || !x.social || !x.theme) throw 0;
-          cfg = normalizeConfig(x);
+          const imported = normalizeConfig(x);
+          clearTimeout(pendingOverlay);
+          const active = activeOverlay();
+          if (active) hideOverlay(active);
+          cfg = imported;
           closeEditor();
           persist();
           fillSettings();

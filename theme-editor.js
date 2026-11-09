@@ -32,6 +32,7 @@ const themeLabels = {
     backgroundAngle: 'ANGLE (°)',
     backgroundOpacity: 'BACKGROUND OPACITY (%)',
     textColor: 'CARD TEXT',
+    countdownColor: 'COUNTDOWN COLOR',
     nameColor: 'PRESENTER TEXT',
     nameBackgroundColor: 'PRESENTER BACKGROUND',
     nameStyle: 'PRESENTER STYLE',
@@ -84,6 +85,7 @@ const themeLabels = {
     backgroundAngle: 'ÂNGULO (°)',
     backgroundOpacity: 'OPACIDADE DO FUNDO (%)',
     textColor: 'TEXTO DO CARTÃO',
+    countdownColor: 'COR DO TIMER',
     nameColor: 'TEXTO DO APRESENTADOR',
     nameBackgroundColor: 'FUNDO DO NOME DO PREGADOR',
     nameStyle: 'ESTILO DO NOME DO PREGADOR',
@@ -130,6 +132,7 @@ const extraFields = [
   'backgroundAngle',
   'backgroundOpacity',
   'textColor',
+  'countdownColor',
   'nameColor',
   'nameBackgroundColor',
   'radius',
@@ -158,6 +161,7 @@ section.innerHTML =
     `<select id="preset">${options(['classic', 'midnight', 'minimal', 'light', 'custom'])}</select>`,
   ) +
   '<div class="hint" data-i18n="customHint"></div>' +
+  field('countdownColor', '<input id="countdownColor" type="color">') +
   field(
     'background',
     `<select id="background">${options(['solid', 'gradient', 'transparent', 'image'])}</select>`,
@@ -252,6 +256,7 @@ $('preset').onchange = () => {
   fillThemeEditor({
     ...draft,
     ...p,
+    countdownColor: draft.countdownColor,
     nameModel: draft.nameModel,
     nameAutoFit: draft.nameAutoFit,
     socialModel: draft.socialModel,
@@ -259,7 +264,7 @@ $('preset').onchange = () => {
   });
 };
 $('settings').addEventListener('input', (e) => {
-  if (['backgroundFile', 'logoFile', 'preset'].includes(e.target.id)) return;
+  if (['backgroundFile', 'logoFile', 'preset', 'countdownColor'].includes(e.target.id)) return;
   if (
     (extraFields.includes(e.target.id) && !['nameModel', 'socialModel'].includes(e.target.id)) ||
     [
